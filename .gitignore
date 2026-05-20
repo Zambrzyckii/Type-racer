@@ -1,9 +1,0 @@
-node_modules/
-appsettings.json
-obj/
-bin/
-TypeRacerServer.http
-package-lock.json
-package.json
-.idea/
-publish/
