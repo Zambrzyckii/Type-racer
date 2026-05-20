@@ -110,10 +110,11 @@ public class GameHub(IHubContext<GameHub> _hubContext, JoinRoomService _joinRoom
 
     public async Task UsePowerUp(string roomCode, string AttackerNick, string TargetNick, string Power)
     {
-        var result = _powerUpService.PowerUp(roomCode, TargetNick, Power);
-        if (result)
+        var result = _powerUpService.PowerUp(roomCode, TargetNick, Power,  out string? targetID);
+        Console.WriteLine($"[ATTACK] Target: {TargetNick}, ConnectionId: {targetID}, Power: {Power}");
+        if (result && !string.IsNullOrEmpty(targetID))
         {
-            await Clients.Group(roomCode).SendAsync("ReceiveAttack", TargetNick, Power);
+            await Clients.Client(targetID).SendAsync("ReceiveAttack", TargetNick, Power);
         }
     }
 

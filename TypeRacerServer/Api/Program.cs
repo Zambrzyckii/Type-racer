@@ -22,7 +22,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddSignalR();
 builder.Services.AddControllers();
-builder.Services.CustomRateLimiting();
+//builder.Services.CustomRateLimiting();
 builder.Services.AddScoped<ILoginRepository, LoginRepository>();
 builder.Services.AddScoped<IRegisterRepository, RegisterRepository>();
 builder.Services.AddScoped<ILeaderboardRepository, LeaderboardRepository>();
@@ -41,7 +41,7 @@ var app = builder.Build();
 
 app.UseCors("ReactPolicy");
 app.UseMiddleware<PerformanceLoggerMiddleware>();
-app.UseRateLimiter();
+//app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

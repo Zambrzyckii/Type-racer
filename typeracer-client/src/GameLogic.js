@@ -29,7 +29,7 @@ export const useGameLogic = () => {
   useEffect(() => {
     if (!session.isAuth) return;
     const conn = new HubConnectionBuilder()
-      .withUrl("http://localhost:5000/gamehub", { accessTokenFactory: () => (localStorage.getItem("token") || "").replace(/[^a-zA-Z0-9_.-]/g, "") })
+      .withUrl("/gamehub", { accessTokenFactory: () => (localStorage.getItem("token") || "").replace(/[^a-zA-Z0-9_.-]/g, "") })
       .withAutomaticReconnect().build();
     setConnection(conn);
     return () => conn.stop();
@@ -38,10 +38,10 @@ export const useGameLogic = () => {
   useEffect(() => {
     if (!session.isAuth) return;
     if (game.status === "finished" && session.username) {
-      fetch("http://localhost:5000/api/savescore", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("token")}` }, body: JSON.stringify({ Username: session.username, Wpm: player.wpm, IsWinner: game.winner === session.username }) }).catch(console.error);
+      fetch("/api/savescore", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("token")}` }, body: JSON.stringify({ Username: session.username, Wpm: player.wpm, IsWinner: game.winner === session.username }) }).catch(console.error);
     }
     if (game.status === "lobby" || game.status === "finished") {
-      fetch("http://localhost:5000/api/leaderboard").then(r => r.ok && r.json().then(d => setGame(g => ({ ...g, leaderboard: d })))).catch(console.error);
+      fetch("/api/leaderboard").then(r => r.ok && r.json().then(d => setGame(g => ({ ...g, leaderboard: d })))).catch(console.error);
     }
   }, [game.status, session.isAuth, session.username, game.winner, player.wpm]);
 
@@ -92,13 +92,13 @@ export const useGameLogic = () => {
       SetUpLobby: (s) => setRoom(r => ({ ...r, settings: { powerUpsEnabled: s.powerUpsEnabled ?? s.PowerUpsEnabled, hardMode: s.hardMode ?? s.HardMode, secondsToEnd: s.secondsToEnd ?? s.SecondsToEnd } })),
       SettingsUpdate: (s) => setRoom(r => ({ ...r, settings: { powerUpsEnabled: s.powerUpsEnabled ?? s.PowerUpsEnabled, hardMode: s.hardMode ?? s.HardMode, secondsToEnd: s.secondsToEnd ?? s.SecondsToEnd } })),
       ReceiveAttack: (t, pwr) => {
-        if (t === localStorage.getItem("username")) {
-          setPlayer(pl => {
-            if (pl.buff === "shield") return { ...pl, buff: null };
-            return pwr === "bomb" ? { ...pl, input: pl.input.substring(0, Math.max(0, pl.input.length - 10)), debuff: "bomb" } : { ...pl, debuff: pwr };
-          });
-          setTimeout(() => setPlayer(pl => pl.debuff === pwr ? { ...pl, debuff: null } : pl), pwr === "bomb" ? 1000 : 3000);
-        }
+        setPlayer(pl => {
+        	if (pl.buff === "shield") return { ...pl, buff:null };
+        	return pwr === "bomb" 
+        	? { ...pl, input: pl.input.substring(0, Math.max(0,pl.input.length - 10)), debuff: "bomb"} : 
+        	{ ...pl, debuff: pwr}; });
+  			setTimeout(() => setPlayer(pl => pl.debuff === pwr ? { ...pl, debuff:null} : pl), 
+  			pwr ===  "bomb" ? 1000 : 3000);      	
       },
       ReceiveDefense: (_, pwr) => { setPlayer(p => ({ ...p, buff: pwr })); setTimeout(() => setPlayer(p => ({ ...p, buff: null })), 1500); },
       ReceiveChatMessage: (s, txt) => setRoom(r => ({ ...r, chat: [...r.chat, { text: txt, sender: s, type: s === localStorage.getItem("username") ? "sent" : "received" }] })),

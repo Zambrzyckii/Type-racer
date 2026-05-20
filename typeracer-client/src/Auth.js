@@ -11,7 +11,7 @@ function Auth({ onLoginSuccess }) {
     setMessage("Sending...");
 
     const endpoint = isLoginMode ? "/api/Login" : "/api/Register";
-    const url = `http://localhost:5000${endpoint}`;
+    const url = `${endpoint}`;
 
     try {
       const response = await fetch(url, {
