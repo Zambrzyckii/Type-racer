@@ -1,0 +1,23 @@
+services:
+    db:
+        image: postgres:15
+        environment:
+            - POSTGRES_DB=TypeRacerDB
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=superfajenhaslo2137pozdropzdr
+        ports:
+            - "5432:5432"
+        volumes:
+            - pgdata:/var/lib/postgresql/data
+
+    backend:
+        build: .
+        ports:
+            - "8080:8080"
+        environment:
+            - ConnectionStrings__DefaultConnection=Host=db;Database=TypeRacerDB;Username=postgres;Password=superfajenhaslo2137pozdropzdr;
+            - JwtSettings__Key=432908fdsnnmzs232198s%&^lkfn2321lop!#32sek2332sad
+        depends_on:
+            - db
+volumes:
+    pgdata:
