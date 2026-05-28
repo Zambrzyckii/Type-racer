@@ -22,7 +22,7 @@ public class UsePowerupServiceTests
         
         var service = new PowerUpService(isolatedGameState);
 
-        bool result = service.PowerUp("Room", "TargetNick", "freeze");
+        bool result = service.PowerUp("Room", "TargetNick", "freeze", out string? TargetID);
         
         Assert.True(result);
         Assert.Equal(1, targetSession.DebuffsReceived);
@@ -43,7 +43,7 @@ public class UsePowerupServiceTests
         
         var service = new PowerUpService(isolatedGameState);
 
-        bool result = service.PowerUp("Room2", "TargetNick", "freeze");
+        bool result = service.PowerUp("Room2", "TargetNick", "freeze",out string? TargetID);
         
         Assert.False(result);
     }
@@ -62,7 +62,7 @@ public class UsePowerupServiceTests
         
         var service = new PowerUpService(isolatedGameState);
 
-        bool result = service.PowerUp("Room", "TargetNick2", "freeze");
+        bool result = service.PowerUp("Room", "TargetNick2", "freeze",out string? TargetID);
         
         Assert.False(result);
     }
