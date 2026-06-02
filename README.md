@@ -8,6 +8,9 @@
 ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
 
 ##  Live Demo
+
+
+planned downtime for 2/06/2026 - 4/06/2026
 >  **The application is fully deployed and available to play live here:** >  [Click here](https://vps-948ca57b.vps.ovh.net/)
 > 
 **Testing Tip:** To fully experience the real-time event synchronization and power-up mechanics, I highly recommend testing a match with a friend. If testing alone, you can easily simulate a multiplayer lobby by joining the same room from two distinct sessions (e.g., one normal browser window and one Incognito window)
