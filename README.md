@@ -54,7 +54,7 @@ Diagrams, request flows and design notes: [docs/architecture.md](docs/architectu
 Prerequisites: Docker with Compose v2.
 
 ```bash
-git clone https://gitlab.com/ZambrzyckiBartosz/type-racer.git
+git clone https://github.com/Zambrzyckii/type-racer.git
 cd type-racer
 docker compose up --build
 ```
