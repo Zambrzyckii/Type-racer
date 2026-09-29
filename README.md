@@ -7,13 +7,6 @@
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker)
 ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
 
-##  Live Demo
-
-
-planned downtime for 2/06/2026 - 4/06/2026
->  **The application is fully deployed and available to play live here:** >  [Click here](https://vps-948ca57b.vps.ovh.net/)
-> 
-**Testing Tip:** To fully experience the real-time event synchronization and power-up mechanics, I highly recommend testing a match with a friend. If testing alone, you can easily simulate a multiplayer lobby by joining the same room from two distinct sessions (e.g., one normal browser window and one Incognito window)
 ##  Project Overview
 Type Racer is a highly concurrent, real-time multiplayer web application where players compete in typing speed contests. Built with a focus on low-latency state synchronization, scalable architecture, and clean code principles, this project demonstrates full-stack capabilities from real-time backend processing to automated deployment.
 
