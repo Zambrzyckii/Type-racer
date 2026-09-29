@@ -7,30 +7,31 @@
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker)
 ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
 
-##  Project Overview
+## Project Overview
 Type Racer is a highly concurrent, real-time multiplayer web application where players compete in typing speed contests. Built with a focus on low-latency state synchronization, scalable architecture, and clean code principles, this project demonstrates full-stack capabilities from real-time backend processing to automated deployment.
 
-##  Key Features
+## Key Features
 * **Real-Time Multiplayer Lobbies:** Low-latency bidirectional communication using **SignalR**.
-* **Event-Driven Gameplay:** Implemented power-ups and debuffs targeting specific players using isolated Connecion ID's, preventing state leakage across shared browser sessions.
+* **Event-Driven Gameplay:** Implemented power-ups and debuffs targeting specific players using isolated Connection IDs, preventing state leakage across shared browser sessions.
 * **Secure Authentication & Profiles:** Custom account management with persistent statistics and leaderboards.
 * **Production-Ready Deployment:** Hosted on a VPS, served via Nginx reverse proxy, and fully containerized with Docker.
 
 ---
 
-##  Architecture & Design Patterns
+## Architecture & Design Patterns
 
-The backend is strictly structured around **Clean Architecture** and **Domain-Driven Design** concepts to ensure separation of concerns, testability, and maintainability.
+The backend is a layered .NET solution inspired by **Clean Architecture**: the Api project depends on Infrastructure and Core, Infrastructure depends on Core, and Core has no project references. Game rules live in Core and reach the database only through repository interfaces.
 
-### Project Structure (Onion Architecture)
-* **`Domain`**: Contains enterprise-wide logic, entities, value objects, and states (e.g., `PlayerData`, `RoomResults`). Zero external dependencies.
-* **`Application`**: Contains business logic, interfaces, and services (`GameManager`, `LeaderboardManager`). It defines the rules of the game without knowing how data is stored.
-* **`Infrastructure`**: Implements data access using **Entity Framework Core**. Utilizes the **Repository Pattern** (`LoginRepository`, `SaveScoreRepository`) to abstract database operations.
-* **`Web/API`**: The entry point (`Program.cs`, `GameHub.cs`). Handles HTTP requests, SignalR WebSocket connections, and Dependency Injection setup.
+### Project Structure (`TypeRacerServer/`)
+* **`Core`**: `Domain/` holds the `User` entity, value objects (`Username`, `Password`), game constants and the in-memory `GameState`; `Application/` holds one service per use case (`JoinRoomService`, `SendProgressService`, `EndGameProcessService`, ...), their result records and the repository interfaces.
+* **`Infrastructure`**: Implements data access using **Entity Framework Core** with Npgsql. Utilizes the **Repository Pattern** (`LoginRepository`, `SaveScoreRepository`, ...) over a single `AppDbContext`.
+* **`Api`**: The entry point (`Program.cs`, `GameHub.cs`, controllers). Handles HTTP requests, JWT authentication, SignalR WebSocket connections and Dependency Injection setup, and translates Core results into real-time events.
+
+Diagrams, request flows and design notes: [docs/architecture.md](docs/architecture.md).
 
 ---
 
-##      Tech Stack
+## Tech Stack
 
 ### Backend
 * **C# / .NET 10** - Core framework.
@@ -48,3 +49,23 @@ The backend is strictly structured around **Clean Architecture** and **Domain-Dr
 
 ---
 
+## Run Locally with Docker
+
+Prerequisites: Docker with Compose v2.
+
+```bash
+git clone https://gitlab.com/ZambrzyckiBartosz/type-racer.git
+cd type-racer
+docker compose up --build
+```
+
+Open http://localhost:3000. Nginx serves the React build and proxies `/api` and `/gamehub` (SignalR WebSockets) to the .NET API, so the whole app runs on one origin. PostgreSQL data persists in the `pgdata` volume and the schema is created on first start. Development defaults for the database password and the JWT key are set in `docker-compose.yml`; to override them run `cp .env.example .env` and edit the values.
+
+---
+
+## Documentation
+
+* [docs/README.md](docs/README.md) - index and reading order
+* [Architecture and application flow](docs/architecture.md)
+* [Backend: API layer, endpoints, Core, Infrastructure](docs/backend/README.md)
+* [Frontend (React)](docs/frontend/README.md)
