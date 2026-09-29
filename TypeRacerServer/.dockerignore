@@ -1,2 +1,11 @@
-bin/
-obj/
+# Build outputs at any depth (Api/, Core/, Infrastructure/, *.Tests/) and the old manual publish/ folder
+**/bin/
+**/obj/
+publish/
+
+# IDE and local-only files
+**/.idea/
+*.http
+
+# Local dev settings: inside the container the API is configured via environment variables
+Api/appsettings.json

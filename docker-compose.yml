@@ -1,29 +1,52 @@
 services:
-    db:
-        image: postgres:15
-        environment:
-            - POSTGRES_DB=TypeRacerDB
-            - POSTGRES_USER=postgres
-            - POSTGRES_PASSWORD=superfajenhaslo2137pozdropzdr
-        ports:
-            - "5433:5432"
-        volumes:
-            - pgdata:/var/lib/postgresql/data
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: TypeRacerDB
+      POSTGRES_USER: postgres
+      # Dev default, override via .env (see .env.example). Applied only when the volume is first created.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-typeracer-dev-password}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # -h localhost forces TCP so the check does not pass on the socket-only server used during first init
+      test: ["CMD-SHELL", "pg_isready -h localhost -U postgres -d TypeRacerDB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    # Uncomment to reach the database from the host (e.g. `dotnet run` against it):
+    # ports:
+    #   - "127.0.0.1:5433:5432"
 
-    backend:
-        build: ./TypeRacerServer
-        ports:
-            - "8080:8080"
-        environment:
-            - ConnectionStrings__DefaultConnection=Host=db;Database=TypeRacerDB;Username=postgres;Password=superfajenhaslo2137pozdropzdr;
-            - JwtSettings__Key=432908fdsnnmzs232198s%&^lkfn2321lop!#32sek2332sad
-        depends_on:
-            - db
-    frontend:
-        build: ./typeracer-client
-        ports:
-            - "3000:80"
-        depends_on:
-            - backend
+  backend:
+    build: ./TypeRacerServer
+    environment:
+      # Must use the same POSTGRES_PASSWORD default as the db service above
+      ConnectionStrings__DefaultConnection: "Host=db;Database=TypeRacerDB;Username=postgres;Password=${POSTGRES_PASSWORD:-typeracer-dev-password}"
+      # HS256 needs at least 32 characters
+      JwtSettings__Key: ${JWT_KEY:-dev-only-jwt-signing-key-please-change-0123456789}
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      # Kestrel opens port 8080 only after Program.cs has created the schema, so an open port means "ready".
+      # bash's /dev/tcp avoids installing curl/wget in the runtime image.
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
+
+  frontend:
+    build: ./typeracer-client
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
-    pgdata:
+  pgdata:
