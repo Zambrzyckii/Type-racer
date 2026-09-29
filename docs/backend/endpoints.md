@@ -179,51 +179,10 @@ Defined in [`PowerUp.cs`](../../TypeRacerServer/Core/Domain/Constant/PowerUp.cs)
 
 The following diagram traces one race from two players joining a room to a restart, covering both the hub methods/events and the two REST calls used after a round ends. Group-addressed events (labeled "group: H and G") are sent once per recipient on the wire; the diagram shows a single arrow per broadcast to keep the flow readable, matching the per-event detail already given in the tables above.
 
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#EEF2FF', 'primaryTextColor': '#1E1B4B', 'primaryBorderColor': '#6366F1', 'lineColor': '#64748B', 'secondaryColor': '#ECFDF5', 'tertiaryColor': '#FFF7ED', 'fontFamily': 'Inter, Segoe UI, Helvetica, Arial, sans-serif', 'fontSize': '14px'}}}%%
-sequenceDiagram
-    participant H as Host client
-    participant G as Guest client
-    participant Hub as GameHub
-    participant Core as Controllers and Core services
-    participant DB as PostgreSQL
-
-    H->>Hub: JoinRoom(code)
-    Hub-->>H: SetUpLobby
-    Hub-->>H: UpdatePlayersList
-    G->>Hub: JoinRoom(code)
-    Hub-->>G: UpdatePlayersList (group: H and G)
-    H->>Hub: ChangeRoomSettings(code, true, false, 5)
-    Hub-->>G: SettingsUpdate (group: H and G)
-    H->>Hub: StartRoomGame(code)
-    Hub->>Core: StartRoomGameService
-    Hub-->>G: LoadText (group: H and G)
-    loop typing
-        G->>Hub: SendProgress(input)
-        Hub->>Core: SendProgressService
-        Hub-->>G: UpdateState (group: H and G)
-        opt correct-length threshold reached
-            Hub-->>G: PowerUpGranted
-        end
-    end
-    G->>Hub: UsePowerUp(code, guest, host, chaos)
-    Hub-->>H: ReceiveAttack
-    H->>Hub: SendProgress(finished text)
-    Hub-->>H: UpdateState (group: H and G)
-    Note over Hub: wait SecondsToEnd
-    Hub->>Core: EndGameProcessService.EndGameProcess
-    Hub-->>G: GameOver (group: H and G)
-    H->>Core: POST /api/SaveScore
-    Core->>DB: update Users
-    G->>Core: POST /api/SaveScore
-    Core->>DB: update Users
-    H->>Core: GET /api/Leaderboard
-    Core->>DB: query top 10 users
-    DB-->>Core: rows
-    Core-->>H: top 10 users
-    H->>Hub: RestartGame()
-    Hub-->>G: BackToLobby (group: H and G)
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../diagrams/backend-endpoints-01-one-race-end-to-end.dark.svg">
+  <img alt="One race, end to end diagram" src="../diagrams/backend-endpoints-01-one-race-end-to-end.svg">
+</picture>
 
 ## Related documents
 

@@ -1,0 +1,9 @@
+sequenceDiagram
+    participant Browser
+    participant nginx
+    participant API
+    Browser->>nginx: WebSocket handshake to /gamehub?access_token=...
+    nginx->>API: Proxied request to /gamehub?access_token=...
+    API->>API: OnMessageReceived copies access_token into context.Token
+    API->>API: JWT bearer validates token (signature, lifetime)
+    API-->>Browser: Hub connection accepted (101 Switching Protocols)

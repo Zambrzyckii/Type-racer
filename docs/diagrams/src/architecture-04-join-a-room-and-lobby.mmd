@@ -1,0 +1,22 @@
+sequenceDiagram
+    participant P as Client (player)
+    participant H as GameHub
+    participant JS as JoinRoomService
+    participant SS as StartRoomGameService
+    participant G as Room group
+
+    P->>H: invoke("JoinRoom", code)
+    H->>JS: JoinRoom(code, connectionId, nickname)
+    JS-->>H: JoinRoomResult (first player = host, NeedsLobbySetup)
+    H->>G: Groups.AddToGroupAsync
+    H-->>P: SetUpLobby
+    H-->>P: UpdatePlayersList
+    H->>G: UpdatePlayersList (rest of group)
+
+    P->>H: invoke("ChangeRoomSettings", ...) [host only]
+    H->>G: SettingsUpdate
+
+    P->>H: invoke("StartRoomGame", code) [host only]
+    H->>SS: StartRoomGame(code, connectionId)
+    SS-->>H: StartRoomGameResult (random quote, reset sessions)
+    H->>G: LoadText

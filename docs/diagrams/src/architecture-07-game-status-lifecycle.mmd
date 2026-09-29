@@ -1,0 +1,6 @@
+stateDiagram-v2
+    [*] --> lobby
+    lobby --> countdown: LoadText
+    countdown --> racing: countdown reaches 0 (after 3s)
+    racing --> finished: GameOver
+    finished --> lobby: BackToLobby

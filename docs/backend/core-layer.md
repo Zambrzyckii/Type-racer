@@ -80,36 +80,10 @@ The `Domain/Enitites` folder is spelled that way in the repository, but the C# n
 
 A diagram of the entity and its two value objects:
 
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#EEF2FF', 'primaryTextColor': '#1E1B4B', 'primaryBorderColor': '#6366F1', 'lineColor': '#64748B', 'secondaryColor': '#ECFDF5', 'tertiaryColor': '#FFF7ED', 'fontFamily': 'Inter, Segoe UI, Helvetica, Arial, sans-serif', 'fontSize': '14px'}}}%%
-classDiagram
-    class User {
-        +int Id
-        +Username Username
-        +Password PasswordHash
-        +uint HighScoreWpm
-        +uint GamesPlayed
-        +uint GamesWin
-    }
-    class Username {
-        +string Value
-    }
-    class Password {
-        +string Value
-    }
-    User --> "1" Username : Username
-    User --> "1" Password : PasswordHash
-    class User:::core
-    class Username:::core
-    class Password:::core
-
-    classDef client fill:#FFF7ED,stroke:#F97316,stroke-width:2px,color:#7C2D12
-    classDef proxy  fill:#F8FAFC,stroke:#475569,stroke-width:2px,color:#0F172A
-    classDef api    fill:#EEF2FF,stroke:#6366F1,stroke-width:2px,color:#1E1B4B
-    classDef core   fill:#ECFDF5,stroke:#10B981,stroke-width:2px,color:#064E3B
-    classDef infra  fill:#F0F9FF,stroke:#0EA5E9,stroke-width:2px,color:#0C4A6E
-    classDef db     fill:#FDF4FF,stroke:#A855F7,stroke-width:2px,color:#581C87
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../diagrams/backend-core-layer-01-domain-model.dark.svg">
+  <img alt="Domain model diagram" src="../diagrams/backend-core-layer-01-domain-model.svg">
+</picture>
 
 ## In-memory game state
 
@@ -119,50 +93,10 @@ classDiagram
 
 [`PlayerSession`](../../TypeRacerServer/Core/Application/Models/PlayerData/PlayerSession.cs) is a record describing one connection's state within a room: `Nickname`, `RoomCode`, `TargetText`, `Progress` (percent), `PowerUpProgress` (correct-character count last checked for power-up thresholds), `Keystrokes`, `Errors`, `DebuffsReceived`, `StartTime`, `FinishTime`, `FreezeEnd`, and the computed property `Accuracy`, which returns `((Keystrokes - Errors) / Keystrokes) * 100.0` or `0` when `Keystrokes` is `0`.
 
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#EEF2FF', 'primaryTextColor': '#1E1B4B', 'primaryBorderColor': '#6366F1', 'lineColor': '#64748B', 'secondaryColor': '#ECFDF5', 'tertiaryColor': '#FFF7ED', 'fontFamily': 'Inter, Segoe UI, Helvetica, Arial, sans-serif', 'fontSize': '14px'}}}%%
-classDiagram
-    class GameState {
-        +ConcurrentDictionary~string, RoomState~ Rooms
-        +ConcurrentDictionary~string, PlayerSession~ Sessions
-    }
-    class RoomState {
-        +string TargetText
-        +ConcurrentDictionary~string, string~ Players
-        +bool GameStarted
-        +string HostConnection
-        +bool PowerUpsEnabled
-        +int SecondsToEnd
-        +bool HardMode
-        +Guid CurrentGameId
-    }
-    class PlayerSession {
-        +string Nickname
-        +string RoomCode
-        +string TargetText
-        +int Progress
-        +int PowerUpProgress
-        +int Keystrokes
-        +int Errors
-        +int DebuffsReceived
-        +DateTime? StartTime
-        +DateTime? FinishTime
-        +DateTime? FreezeEnd
-        +double Accuracy
-    }
-    GameState "1" --> "*" RoomState : Rooms
-    GameState "1" --> "*" PlayerSession : Sessions
-    class GameState:::core
-    class RoomState:::core
-    class PlayerSession:::core
-
-    classDef client fill:#FFF7ED,stroke:#F97316,stroke-width:2px,color:#7C2D12
-    classDef proxy  fill:#F8FAFC,stroke:#475569,stroke-width:2px,color:#0F172A
-    classDef api    fill:#EEF2FF,stroke:#6366F1,stroke-width:2px,color:#1E1B4B
-    classDef core   fill:#ECFDF5,stroke:#10B981,stroke-width:2px,color:#064E3B
-    classDef infra  fill:#F0F9FF,stroke:#0EA5E9,stroke-width:2px,color:#0C4A6E
-    classDef db     fill:#FDF4FF,stroke:#A855F7,stroke-width:2px,color:#581C87
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../diagrams/backend-core-layer-02-in-memory-game-state.dark.svg">
+  <img alt="In-memory game state diagram" src="../diagrams/backend-core-layer-02-in-memory-game-state.svg">
+</picture>
 
 ## Application services
 

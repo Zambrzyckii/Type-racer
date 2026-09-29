@@ -1,0 +1,19 @@
+sequenceDiagram
+    participant H as GameHub
+    participant EP as EndGameProcessService
+    participant C as Client
+    participant SSC as SaveScoreController
+    participant SS as SaveScoreService
+    participant DB as Users (PostgreSQL)
+    participant LB as Leaderboard controller / LeaderboardSerivce
+
+    H->>EP: EndGameProcess(roomCode)
+    EP-->>H: winner nickname
+    H->>C: GameOver(winner)
+    C->>SSC: POST /api/SaveScore (Bearer token)
+    SSC->>SS: SaveScoreHandler(request, usernameFromToken)
+    SS->>DB: GamesPlayed++, GamesWin, HighScoreWpm
+    SS->>DB: SaveChangesAsync
+    C->>LB: GET /api/Leaderboard
+    LB->>DB: GetTopUsers (top 10 by GamesWin, then HighScoreWpm)
+    LB-->>C: leaderboard

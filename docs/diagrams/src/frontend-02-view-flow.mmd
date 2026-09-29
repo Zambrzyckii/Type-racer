@@ -1,0 +1,8 @@
+stateDiagram-v2
+    [*] --> Auth
+    Auth --> JoinRoom: login or register succeeds
+    JoinRoom --> Lobby: JoinRoom returns true
+    Lobby --> Countdown: LoadText received
+    Countdown --> Racing: countdown reaches 0
+    Racing --> Finished: GameOver received
+    Finished --> Lobby: BackToLobby received

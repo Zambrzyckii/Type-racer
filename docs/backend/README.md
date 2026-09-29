@@ -16,22 +16,10 @@ The backend lives in `TypeRacerServer/` and consists of three .NET 10 projects p
 
 The diagram shows project references: arrows point from the project that depends to the project it depends on.
 
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#EEF2FF', 'primaryTextColor': '#1E1B4B', 'primaryBorderColor': '#6366F1', 'lineColor': '#64748B', 'secondaryColor': '#ECFDF5', 'tertiaryColor': '#FFF7ED', 'fontFamily': 'Inter, Segoe UI, Helvetica, Arial, sans-serif', 'fontSize': '14px'}}}%%
-flowchart LR
-    ApiTests["Api.Tests"]:::api --> Api
-    CoreTests["Core.Tests"]:::core --> Core
-    Api["Api project<br/>TypeRacerServer.csproj"]:::api --> Infra["Infrastructure project"]:::infra
-    Api --> Core["Core project<br/>Domain/ + Application/"]:::core
-    Infra --> Core
-
-    classDef client fill:#FFF7ED,stroke:#F97316,stroke-width:2px,color:#7C2D12
-    classDef proxy  fill:#F8FAFC,stroke:#475569,stroke-width:2px,color:#0F172A
-    classDef api    fill:#EEF2FF,stroke:#6366F1,stroke-width:2px,color:#1E1B4B
-    classDef core   fill:#ECFDF5,stroke:#10B981,stroke-width:2px,color:#064E3B
-    classDef infra  fill:#F0F9FF,stroke:#0EA5E9,stroke-width:2px,color:#0C4A6E
-    classDef db     fill:#FDF4FF,stroke:#A855F7,stroke-width:2px,color:#581C87
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../diagrams/backend-01-dependency-direction.dark.svg">
+  <img alt="Dependency direction diagram" src="../diagrams/backend-01-dependency-direction.svg">
+</picture>
 
 Core declares the repository interfaces and Infrastructure implements them, so the Api project is the only place where both sides meet (the repository registrations in [`Program.cs`](../../TypeRacerServer/Api/Program.cs)). Inside Core, the `Domain/` and `Application/` folders reference each other; see [Architecture](../architecture.md#backend-layering) for the details.
 

@@ -1,0 +1,42 @@
+sequenceDiagram
+    participant H as Host client
+    participant G as Guest client
+    participant Hub as GameHub
+    participant Core as Controllers and Core services
+    participant DB as PostgreSQL
+
+    H->>Hub: JoinRoom(code)
+    Hub-->>H: SetUpLobby
+    Hub-->>H: UpdatePlayersList
+    G->>Hub: JoinRoom(code)
+    Hub-->>G: UpdatePlayersList (group: H and G)
+    H->>Hub: ChangeRoomSettings(code, true, false, 5)
+    Hub-->>G: SettingsUpdate (group: H and G)
+    H->>Hub: StartRoomGame(code)
+    Hub->>Core: StartRoomGameService
+    Hub-->>G: LoadText (group: H and G)
+    loop typing
+        G->>Hub: SendProgress(input)
+        Hub->>Core: SendProgressService
+        Hub-->>G: UpdateState (group: H and G)
+        opt correct-length threshold reached
+            Hub-->>G: PowerUpGranted
+        end
+    end
+    G->>Hub: UsePowerUp(code, guest, host, chaos)
+    Hub-->>H: ReceiveAttack
+    H->>Hub: SendProgress(finished text)
+    Hub-->>H: UpdateState (group: H and G)
+    Note over Hub: wait SecondsToEnd
+    Hub->>Core: EndGameProcessService.EndGameProcess
+    Hub-->>G: GameOver (group: H and G)
+    H->>Core: POST /api/SaveScore
+    Core->>DB: update Users
+    G->>Core: POST /api/SaveScore
+    Core->>DB: update Users
+    H->>Core: GET /api/Leaderboard
+    Core->>DB: query top 10 users
+    DB-->>Core: rows
+    Core-->>H: top 10 users
+    H->>Hub: RestartGame()
+    Hub-->>G: BackToLobby (group: H and G)

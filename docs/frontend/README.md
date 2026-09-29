@@ -46,42 +46,19 @@ Styling is a mix of a stylesheet ([`typeracer-client/src/App.css`](../../typerac
 
 The following diagram shows how `App.js` consumes the hook, and how the hook talks to the network.
 
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#EEF2FF', 'primaryTextColor': '#1E1B4B', 'primaryBorderColor': '#6366F1', 'lineColor': '#64748B', 'secondaryColor': '#ECFDF5', 'tertiaryColor': '#FFF7ED', 'fontFamily': 'Inter, Segoe UI, Helvetica, Arial, sans-serif', 'fontSize': '14px'}}}%%
-flowchart LR
-    classDef client fill:#FFF7ED,stroke:#F97316,stroke-width:2px,color:#7C2D12
-    classDef proxy  fill:#F8FAFC,stroke:#475569,stroke-width:2px,color:#0F172A
-    classDef api    fill:#EEF2FF,stroke:#6366F1,stroke-width:2px,color:#1E1B4B
-    classDef core   fill:#ECFDF5,stroke:#10B981,stroke-width:2px,color:#064E3B
-    classDef infra  fill:#F0F9FF,stroke:#0EA5E9,stroke-width:2px,color:#0C4A6E
-    classDef db     fill:#FDF4FF,stroke:#A855F7,stroke-width:2px,color:#581C87
-
-    A["App.js"] -->|"renders from"| H["useGameLogic hook"]
-    H -->|"session / room / game / player / computed / actions"| A
-    H -->|"HubConnection.invoke"| S["/gamehub (SignalR)"]
-    S -->|"connection.on handlers"| H
-    H -->|"fetch()"| R["/api/... (REST)"]
-    R -->|"JSON response"| H
-
-    class A,H client
-    class S,R proxy
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../diagrams/frontend-01-state-model-usegamelogic.dark.svg">
+  <img alt="State model (useGameLogic) diagram" src="../diagrams/frontend-01-state-model-usegamelogic.svg">
+</picture>
 
 ## View flow
 
 `App.js` renders a single view at a time, chosen by a chain of conditions on `session`, `room` and `game.status`.
 
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#EEF2FF', 'primaryTextColor': '#1E1B4B', 'primaryBorderColor': '#6366F1', 'lineColor': '#64748B', 'secondaryColor': '#ECFDF5', 'tertiaryColor': '#FFF7ED', 'fontFamily': 'Inter, Segoe UI, Helvetica, Arial, sans-serif', 'fontSize': '14px'}}}%%
-stateDiagram-v2
-    [*] --> Auth
-    Auth --> JoinRoom: login or register succeeds
-    JoinRoom --> Lobby: JoinRoom returns true
-    Lobby --> Countdown: LoadText received
-    Countdown --> Racing: countdown reaches 0
-    Racing --> Finished: GameOver received
-    Finished --> Lobby: BackToLobby received
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../diagrams/frontend-02-view-flow.dark.svg">
+  <img alt="View flow diagram" src="../diagrams/frontend-02-view-flow.svg">
+</picture>
 
 **Auth** (`!session.isAuth`): the login/register form from `Auth.js`, with a "Login"/"Register" heading, `PLAYER NAME` and `PASSWORD` inputs, a submit button ("Log In" or "Create Account"), and a toggle link between the two modes.
 

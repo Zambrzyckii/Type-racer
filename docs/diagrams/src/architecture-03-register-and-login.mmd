@@ -1,0 +1,21 @@
+sequenceDiagram
+    participant C as Auth.js
+    participant RC as RegisterController
+    participant RS as RegisterService
+    participant LC as LoginController
+    participant LS as LoginService
+    participant DB as Users (PostgreSQL)
+
+    C->>RC: POST /api/Register
+    RC->>RS: RegisterHandler(request)
+    RS->>RS: IRegisterRepository.Exists(username)
+    RS->>RS: BCrypt.HashPassword(password)
+    RS->>DB: IRegisterRepository.SaveNewUser
+    RC-->>C: 200 OK
+
+    C->>LC: POST /api/Login
+    LC->>LS: LoginHandler(request)
+    LS->>DB: ILoginRepository.Login(username)
+    LS->>LS: BCrypt.Verify(password, hash)
+    LS->>LS: issue JWT (HS256, ClaimTypes.Name, Expires = UtcNow.AddDays(3))
+    LC-->>C: { token }

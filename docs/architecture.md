@@ -6,19 +6,10 @@ Type Racer is a real-time multiplayer typing race: players join a room by code, 
 
 The diagram shows the three containers a browser talks to and how a request reaches PostgreSQL.
 
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#EEF2FF', 'primaryTextColor': '#1E1B4B', 'primaryBorderColor': '#6366F1', 'lineColor': '#64748B', 'secondaryColor': '#ECFDF5', 'tertiaryColor': '#FFF7ED', 'fontFamily': 'Inter, Segoe UI, Helvetica, Arial, sans-serif', 'fontSize': '14px'}}}%%
-flowchart LR
-    classDef client fill:#FFF7ED,stroke:#F97316,stroke-width:2px,color:#7C2D12
-    classDef proxy  fill:#F8FAFC,stroke:#475569,stroke-width:2px,color:#0F172A
-    classDef api    fill:#EEF2FF,stroke:#6366F1,stroke-width:2px,color:#1E1B4B
-    classDef db     fill:#FDF4FF,stroke:#A855F7,stroke-width:2px,color:#581C87
-
-    Browser["Browser<br/>(React SPA)"]:::client -->|"HTTP :3000"| Nginx["nginx :3000<br/>serves static build,<br/>proxies /api/* and /gamehub"]:::proxy
-    Nginx -->|"REST /api/*"| Api["ASP.NET Core API<br/>Kestrel :8080<br/>Controllers + GameHub"]:::api
-    Nginx -->|"WebSocket /gamehub"| Api
-    Api -->|"Npgsql"| Db["PostgreSQL 15<br/>Users table"]:::db
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="diagrams/architecture-01-system-context.dark.svg">
+  <img alt="System context diagram" src="diagrams/architecture-01-system-context.svg">
+</picture>
 
 The system runs as three containers: `frontend` (nginx serving the React build), `backend` (Kestrel), and `db` (PostgreSQL). Every URL the client calls is relative (`/api/...`, `/gamehub`), so nginx is the single origin the browser talks to; it decides, based on the path, whether to proxy to the backend as plain HTTP or upgrade the connection to a WebSocket.
 
@@ -26,34 +17,10 @@ The system runs as three containers: `frontend` (nginx serving the React build),
 
 The diagram shows the three .NET projects and the folders each one owns; arrows follow `ProjectReference` direction.
 
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#EEF2FF', 'primaryTextColor': '#1E1B4B', 'primaryBorderColor': '#6366F1', 'lineColor': '#64748B', 'secondaryColor': '#ECFDF5', 'tertiaryColor': '#FFF7ED', 'fontFamily': 'Inter, Segoe UI, Helvetica, Arial, sans-serif', 'fontSize': '14px'}}}%%
-flowchart TB
-    classDef client fill:#FFF7ED,stroke:#F97316,stroke-width:2px,color:#7C2D12
-    classDef proxy  fill:#F8FAFC,stroke:#475569,stroke-width:2px,color:#0F172A
-    classDef api    fill:#EEF2FF,stroke:#6366F1,stroke-width:2px,color:#1E1B4B
-    classDef core   fill:#ECFDF5,stroke:#10B981,stroke-width:2px,color:#064E3B
-    classDef infra  fill:#F0F9FF,stroke:#0EA5E9,stroke-width:2px,color:#0C4A6E
-
-    subgraph ApiProj ["Api project (TypeRacerServer.csproj)"]
-        ApiFiles["Program.cs, GameHub.cs,<br/>Controllers/, Extensions/, Middlewares/"]:::api
-    end
-    subgraph InfraProj ["Infrastructure project"]
-        InfraFiles["Persistence/AppDbContext.cs,<br/>Persistence/Repositories/"]:::infra
-    end
-    subgraph CoreProj ["Core project"]
-        DomainFiles["Domain/: Enitites/User.cs, ValueObjects/,<br/>Constant/, State/GameState.cs,<br/>Dependency/DependencyInjection.cs"]:::core
-        AppFiles["Application/: Interfaces/, Models/,<br/>Requests/, Services/"]:::core
-    end
-
-    ApiProj --> InfraProj
-    ApiProj --> CoreProj
-    InfraProj --> CoreProj
-
-    style ApiProj fill:#F5F7FF,stroke:#6366F1,stroke-width:2px,color:#1E1B4B
-    style InfraProj fill:#F5FBFF,stroke:#0EA5E9,stroke-width:2px,color:#0C4A6E
-    style CoreProj fill:#F4FDF9,stroke:#10B981,stroke-width:2px,color:#064E3B
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="diagrams/architecture-02-backend-layering.dark.svg">
+  <img alt="Backend layering diagram" src="diagrams/architecture-02-backend-layering.svg">
+</picture>
 
 This is a layered architecture inspired by Clean Architecture: repository interfaces are declared in the Core project (folders `Domain/` and `Application/` inside `TypeRacerServer/Core`), under `Core/Application/Interfaces/` (for example [`ILoginRepository`](../TypeRacerServer/Core/Application/Interfaces/AccountManagerInterfaces/ILoginRepository.cs)), and implemented in the Infrastructure project (`TypeRacerServer/Infrastructure`), under `Persistence/Repositories/` (for example [`LoginRepository`](../TypeRacerServer/Infrastructure/Persistence/Repositories/LoginRepository.cs)). This inverts the natural dependency: Core does not reference Infrastructure, yet Infrastructure code implements the contracts Core defines, so Core stays free of any EF Core or Npgsql reference.
 
@@ -78,30 +45,10 @@ Only the `Users` table is persisted to PostgreSQL; rooms, sessions and individua
 
 The sequence below shows account creation followed by a login that returns a JWT.
 
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#EEF2FF', 'primaryTextColor': '#1E1B4B', 'primaryBorderColor': '#6366F1', 'lineColor': '#64748B', 'secondaryColor': '#ECFDF5', 'tertiaryColor': '#FFF7ED', 'fontFamily': 'Inter, Segoe UI, Helvetica, Arial, sans-serif', 'fontSize': '14px'}}}%%
-sequenceDiagram
-    participant C as Auth.js
-    participant RC as RegisterController
-    participant RS as RegisterService
-    participant LC as LoginController
-    participant LS as LoginService
-    participant DB as Users (PostgreSQL)
-
-    C->>RC: POST /api/Register
-    RC->>RS: RegisterHandler(request)
-    RS->>RS: IRegisterRepository.Exists(username)
-    RS->>RS: BCrypt.HashPassword(password)
-    RS->>DB: IRegisterRepository.SaveNewUser
-    RC-->>C: 200 OK
-
-    C->>LC: POST /api/Login
-    LC->>LS: LoginHandler(request)
-    LS->>DB: ILoginRepository.Login(username)
-    LS->>LS: BCrypt.Verify(password, hash)
-    LS->>LS: issue JWT (HS256, ClaimTypes.Name, Expires = UtcNow.AddDays(3))
-    LC-->>C: { token }
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="diagrams/architecture-03-register-and-login.dark.svg">
+  <img alt="Register and login diagram" src="diagrams/architecture-03-register-and-login.svg">
+</picture>
 
 1. `Auth.js` posts credentials to `POST /api/Register`; `RegisterController` calls `RegisterService.RegisterHandler`, which checks `IRegisterRepository.Exists`, hashes the password with BCrypt, and calls `IRegisterRepository.SaveNewUser`.
 2. `Auth.js` then posts to `POST /api/Login`; `LoginController` calls `LoginService.LoginHandler`, which loads the user through `ILoginRepository.Login`, verifies the password with `BCrypt.Net.BCrypt.Verify`, and on success issues a JWT signed with HS256, carrying a single `ClaimTypes.Name` claim and `Expires = DateTime.UtcNow.AddDays(3)`.
@@ -113,31 +60,10 @@ sequenceDiagram
 
 The sequence below shows a player joining a room, the host configuring it, and the host starting the race.
 
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#EEF2FF', 'primaryTextColor': '#1E1B4B', 'primaryBorderColor': '#6366F1', 'lineColor': '#64748B', 'secondaryColor': '#ECFDF5', 'tertiaryColor': '#FFF7ED', 'fontFamily': 'Inter, Segoe UI, Helvetica, Arial, sans-serif', 'fontSize': '14px'}}}%%
-sequenceDiagram
-    participant P as Client (player)
-    participant H as GameHub
-    participant JS as JoinRoomService
-    participant SS as StartRoomGameService
-    participant G as Room group
-
-    P->>H: invoke("JoinRoom", code)
-    H->>JS: JoinRoom(code, connectionId, nickname)
-    JS-->>H: JoinRoomResult (first player = host, NeedsLobbySetup)
-    H->>G: Groups.AddToGroupAsync
-    H-->>P: SetUpLobby
-    H-->>P: UpdatePlayersList
-    H->>G: UpdatePlayersList (rest of group)
-
-    P->>H: invoke("ChangeRoomSettings", ...) [host only]
-    H->>G: SettingsUpdate
-
-    P->>H: invoke("StartRoomGame", code) [host only]
-    H->>SS: StartRoomGame(code, connectionId)
-    SS-->>H: StartRoomGameResult (random quote, reset sessions)
-    H->>G: LoadText
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="diagrams/architecture-04-join-a-room-and-lobby.dark.svg">
+  <img alt="Join a room and lobby diagram" src="diagrams/architecture-04-join-a-room-and-lobby.svg">
+</picture>
 
 1. The client calls `invoke("JoinRoom", code)`; `GameHub.JoinRoom` delegates to `JoinRoomService.JoinRoom`, which does `Rooms.GetOrAdd(code, ...)` and makes the first player in an empty room the host, flagging `NeedsLobbySetup`.
 2. The hub adds the caller's connection to the SignalR group, sends `SetUpLobby` to the caller only, then sends `UpdatePlayersList` to the caller and to the rest of the group.
@@ -149,28 +75,10 @@ sequenceDiagram
 
 The sequence below shows one keystroke round-trip while a race is in progress.
 
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#EEF2FF', 'primaryTextColor': '#1E1B4B', 'primaryBorderColor': '#6366F1', 'lineColor': '#64748B', 'secondaryColor': '#ECFDF5', 'tertiaryColor': '#FFF7ED', 'fontFamily': 'Inter, Segoe UI, Helvetica, Arial, sans-serif', 'fontSize': '14px'}}}%%
-sequenceDiagram
-    participant P as Client (player)
-    participant H as GameHub
-    participant SP as SendProgressService
-    participant G as Room group
-
-    P->>H: invoke("SendProgress", currentInput)
-    H->>SP: SendProgress(currentInput, connectionId)
-    SP-->>H: SendProgressResult (progress, wpm, errors, power-up/buff)
-    alt power-up earned
-        H-->>P: PowerUpGranted
-    end
-    alt buff earned
-        H-->>P: ReceiveDefense("auto", buff)
-    end
-    alt hard mode elimination
-        H->>G: ReceiveAttack(nick, "freeze")
-    end
-    H->>G: UpdateState(nick, progress, hasError, isDone, wpm)
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="diagrams/architecture-05-race-loop.dark.svg">
+  <img alt="Race loop diagram" src="diagrams/architecture-05-race-loop.svg">
+</picture>
 
 1. On every change to the input field the client calls `invoke("SendProgress", currentInput)`; `GameHub.SendProgress` delegates to `SendProgressService.SendProgress`.
 2. The service computes the length of the correct prefix against the player's target text, counts errors, derives `Progress` as a percentage, and computes `Wpm` as `(correct characters / 5) / elapsed minutes`. When power-ups are enabled on the room, a power-up is granted every 5 correct characters and a buff every 10.
@@ -182,28 +90,10 @@ sequenceDiagram
 
 The sequence below shows how a finished race is scored and saved.
 
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#EEF2FF', 'primaryTextColor': '#1E1B4B', 'primaryBorderColor': '#6366F1', 'lineColor': '#64748B', 'secondaryColor': '#ECFDF5', 'tertiaryColor': '#FFF7ED', 'fontFamily': 'Inter, Segoe UI, Helvetica, Arial, sans-serif', 'fontSize': '14px'}}}%%
-sequenceDiagram
-    participant H as GameHub
-    participant EP as EndGameProcessService
-    participant C as Client
-    participant SSC as SaveScoreController
-    participant SS as SaveScoreService
-    participant DB as Users (PostgreSQL)
-    participant LB as Leaderboard controller / LeaderboardSerivce
-
-    H->>EP: EndGameProcess(roomCode)
-    EP-->>H: winner nickname
-    H->>C: GameOver(winner)
-    C->>SSC: POST /api/SaveScore (Bearer token)
-    SSC->>SS: SaveScoreHandler(request, usernameFromToken)
-    SS->>DB: GamesPlayed++, GamesWin, HighScoreWpm
-    SS->>DB: SaveChangesAsync
-    C->>LB: GET /api/Leaderboard
-    LB->>DB: GetTopUsers (top 10 by GamesWin, then HighScoreWpm)
-    LB-->>C: leaderboard
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="diagrams/architecture-06-end-of-game-and-persistence.dark.svg">
+  <img alt="End of game and persistence diagram" src="diagrams/architecture-06-end-of-game-and-persistence.svg">
+</picture>
 
 1. `GameHub.ExecuteEndGame` runs either immediately or after `Task.Delay(1000 * SecondsToEnd)`, then calls `EndGameProcessService.EndGameProcess`, which orders players by progress, then finish time, then accuracy, then debuffs received, and returns the winner's nickname.
 2. The hub sends `GameOver(winner)` to the room group through `IHubContext<GameHub>`.
@@ -215,15 +105,10 @@ sequenceDiagram
 
 The diagram shows the client-side `game.status` field maintained by the `useGameLogic` hook.
 
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#EEF2FF', 'primaryTextColor': '#1E1B4B', 'primaryBorderColor': '#6366F1', 'lineColor': '#64748B', 'secondaryColor': '#ECFDF5', 'tertiaryColor': '#FFF7ED', 'fontFamily': 'Inter, Segoe UI, Helvetica, Arial, sans-serif', 'fontSize': '14px'}}}%%
-stateDiagram-v2
-    [*] --> lobby
-    lobby --> countdown: LoadText
-    countdown --> racing: countdown reaches 0 (after 3s)
-    racing --> finished: GameOver
-    finished --> lobby: BackToLobby
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="diagrams/architecture-07-game-status-lifecycle.dark.svg">
+  <img alt="Game status lifecycle diagram" src="diagrams/architecture-07-game-status-lifecycle.svg">
+</picture>
 
 The four states live in [`typeracer-client/src/GameLogic.js`](../typeracer-client/src/GameLogic.js): `lobby` before a race starts, `countdown` while the client counts 3 seconds down after receiving `LoadText`, `racing` once the countdown reaches zero, and `finished` after the hub sends `GameOver`. `BackToLobby` resets local state back to `lobby`. On the server, the equivalent transitions are `RoomState.GameStarted` (set by `StartRoomGameService`, cleared by `EndGameProcessService` and `RestartGameService`) and each `PlayerSession.FinishTime` (set once by `SendProgressService` when a player completes the text).
 
@@ -231,17 +116,10 @@ The four states live in [`typeracer-client/src/GameLogic.js`](../typeracer-clien
 
 The diagram shows the three containers defined in the root `docker-compose.yml`, the published port and the named volume.
 
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#EEF2FF', 'primaryTextColor': '#1E1B4B', 'primaryBorderColor': '#6366F1', 'lineColor': '#64748B', 'secondaryColor': '#ECFDF5', 'tertiaryColor': '#FFF7ED', 'fontFamily': 'Inter, Segoe UI, Helvetica, Arial, sans-serif', 'fontSize': '14px'}}}%%
-flowchart LR
-    classDef proxy fill:#F8FAFC,stroke:#475569,stroke-width:2px,color:#0F172A
-    classDef api   fill:#EEF2FF,stroke:#6366F1,stroke-width:2px,color:#1E1B4B
-    classDef db    fill:#FDF4FF,stroke:#A855F7,stroke-width:2px,color:#581C87
-
-    Frontend["frontend<br/>nginx:alpine<br/>publishes 3000:80"]:::proxy -->|"waits for healthy"| Backend["backend<br/>aspnet:10.0, port 8080"]:::api
-    Backend -->|"waits for healthy"| DbSvc["db<br/>postgres:15"]:::db
-    DbSvc --- Vol[("pgdata volume")]:::db
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="diagrams/architecture-08-deployment.dark.svg">
+  <img alt="Deployment diagram" src="diagrams/architecture-08-deployment.svg">
+</picture>
 
 - `db` runs `postgres:15`, is checked with a `pg_isready` healthcheck, and stores data in the named volume `pgdata`.
 - `backend` is built from [`TypeRacerServer/Dockerfile`](../TypeRacerServer/Dockerfile), a multi-stage build (`mcr.microsoft.com/dotnet/sdk:10.0` to `mcr.microsoft.com/dotnet/aspnet:10.0`) that listens on port 8080; it starts only once `db` reports healthy, and its own healthcheck probes `127.0.0.1:8080` with a bash `/dev/tcp` redirection (no curl/wget in the runtime image).

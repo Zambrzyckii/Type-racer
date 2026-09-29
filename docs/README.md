@@ -22,7 +22,7 @@ Type Racer is a real-time multiplayer typing game: a .NET 10 API with SignalR, a
 
 ## Conventions
 
-- Diagrams are written in [Mermaid](https://mermaid.js.org/) and render directly on GitHub and GitLab. Colours are consistent across pages: orange for the browser, grey for nginx, indigo for the Api project, green for Core, blue for Infrastructure, purple for PostgreSQL.
+- Diagrams are authored in [Mermaid](https://mermaid.js.org/) under [`diagrams/src/`](diagrams/src/) and committed as pre-rendered SVGs with a light and a dark variant. Pages embed them with `<picture>` and `prefers-color-scheme`, so GitHub and GitLab show the variant that matches your theme, at full size and without the interactive viewer. Colours are consistent across pages: orange for the browser, grey for nginx, indigo for the Api project, green for Core, blue for Infrastructure, purple for PostgreSQL. After editing a source, run `python3 docs/diagrams/render.py` (see [`diagrams/README.md`](diagrams/README.md)).
 - Code is referenced by relative links to files rather than line numbers, so the links stay valid as files change.
 - Identifiers are quoted exactly as they appear in the code, including a few unusual spellings.
 

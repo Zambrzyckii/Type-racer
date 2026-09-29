@@ -65,22 +65,10 @@ Locally, configuration values come from `appsettings.json` / `appsettings.Develo
 
 The following diagram shows the middleware order as registered in `Program.cs`.
 
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#EEF2FF', 'primaryTextColor': '#1E1B4B', 'primaryBorderColor': '#6366F1', 'lineColor': '#64748B', 'secondaryColor': '#ECFDF5', 'tertiaryColor': '#FFF7ED', 'fontFamily': 'Inter, Segoe UI, Helvetica, Arial, sans-serif', 'fontSize': '14px'}}}%%
-flowchart LR
-    classDef client fill:#FFF7ED,stroke:#F97316,stroke-width:2px,color:#7C2D12
-    classDef proxy  fill:#F8FAFC,stroke:#475569,stroke-width:2px,color:#0F172A
-    classDef api    fill:#EEF2FF,stroke:#6366F1,stroke-width:2px,color:#1E1B4B
-    classDef core   fill:#ECFDF5,stroke:#10B981,stroke-width:2px,color:#064E3B
-    classDef infra  fill:#F0F9FF,stroke:#0EA5E9,stroke-width:2px,color:#0C4A6E
-    classDef db     fill:#FDF4FF,stroke:#A855F7,stroke-width:2px,color:#581C87
-
-    Req["Incoming request"]:::client --> Cors["CORS ReactPolicy"]:::api
-    Cors --> Perf["PerformanceLoggerMiddleware"]:::api
-    Perf --> Authn["Authentication"]:::api
-    Authn --> Authz["Authorization"]:::api
-    Authz --> Endpoints["Controllers / GameHub at /gamehub"]:::api
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../diagrams/backend-api-layer-01-request-pipeline.dark.svg">
+  <img alt="Request pipeline diagram" src="../diagrams/backend-api-layer-01-request-pipeline.svg">
+</picture>
 
 - **CORS (`ReactPolicy`)** runs first and allows requests from `http://localhost:3000`.
 - **`PerformanceLoggerMiddleware`** wraps the rest of the pipeline in a `Stopwatch` and logs an informational message ("Request took {ElapsedMilliseconds} ms") when a request takes more than 500 ms, read from [`PerformanceLoggerMiddleware.cs`](../../TypeRacerServer/Api/Middlewares/PerformanceLoggerMiddleware.cs).
@@ -111,18 +99,10 @@ Token issuance itself (validating credentials and producing the JWT) happens in 
 
 The sequence below shows where the token is validated for a hub connection carrying `?access_token=`.
 
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#EEF2FF', 'primaryTextColor': '#1E1B4B', 'primaryBorderColor': '#6366F1', 'lineColor': '#64748B', 'secondaryColor': '#ECFDF5', 'tertiaryColor': '#FFF7ED', 'fontFamily': 'Inter, Segoe UI, Helvetica, Arial, sans-serif', 'fontSize': '14px'}}}%%
-sequenceDiagram
-    participant Browser
-    participant nginx
-    participant API
-    Browser->>nginx: WebSocket handshake to /gamehub?access_token=...
-    nginx->>API: Proxied request to /gamehub?access_token=...
-    API->>API: OnMessageReceived copies access_token into context.Token
-    API->>API: JWT bearer validates token (signature, lifetime)
-    API-->>Browser: Hub connection accepted (101 Switching Protocols)
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../diagrams/backend-api-layer-02-authentication.dark.svg">
+  <img alt="Authentication diagram" src="../diagrams/backend-api-layer-02-authentication.svg">
+</picture>
 
 ## Controllers
 
@@ -150,23 +130,10 @@ Two hub methods start background work with `Task.Run` and call the injected `IHu
 
 The diagram below traces one hub method, `SendProgress`, through this adapter pattern.
 
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#EEF2FF', 'primaryTextColor': '#1E1B4B', 'primaryBorderColor': '#6366F1', 'lineColor': '#64748B', 'secondaryColor': '#ECFDF5', 'tertiaryColor': '#FFF7ED', 'fontFamily': 'Inter, Segoe UI, Helvetica, Arial, sans-serif', 'fontSize': '14px'}}}%%
-flowchart TB
-    classDef client fill:#FFF7ED,stroke:#F97316,stroke-width:2px,color:#7C2D12
-    classDef api    fill:#EEF2FF,stroke:#6366F1,stroke-width:2px,color:#1E1B4B
-    classDef core   fill:#ECFDF5,stroke:#10B981,stroke-width:2px,color:#064E3B
-
-    A["Client calls SendProgress(currentInput)"]:::client --> B["GameHub.SendProgress"]:::api
-    B --> C["SendProgressService.SendProgress"]:::core
-    C --> D["Result record returned"]:::core
-    D --> E{"Result flags"}:::api
-    E -->|"PowerUpGrant"| F["Clients.Caller: PowerUpGranted"]:::api
-    E -->|"BuffToGrant"| G["Clients.Caller: ReceiveDefense"]:::api
-    E -->|"TriggerHardModeFail"| H["Clients.Group: ReceiveAttack"]:::api
-    E --> I["Clients.Group: UpdateState"]:::api
-    E -->|"ShouldStartEndGameTimer / ShouldEndGameImmediately"| J["Delayed or immediate ExecuteEndGame"]:::api
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../diagrams/backend-api-layer-03-gamehub.dark.svg">
+  <img alt="GameHub diagram" src="../diagrams/backend-api-layer-03-gamehub.svg">
+</picture>
 
 | Hub method | Core service |
 |---|---|

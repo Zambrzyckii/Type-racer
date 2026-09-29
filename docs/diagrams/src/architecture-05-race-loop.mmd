@@ -1,0 +1,19 @@
+sequenceDiagram
+    participant P as Client (player)
+    participant H as GameHub
+    participant SP as SendProgressService
+    participant G as Room group
+
+    P->>H: invoke("SendProgress", currentInput)
+    H->>SP: SendProgress(currentInput, connectionId)
+    SP-->>H: SendProgressResult (progress, wpm, errors, power-up/buff)
+    alt power-up earned
+        H-->>P: PowerUpGranted
+    end
+    alt buff earned
+        H-->>P: ReceiveDefense("auto", buff)
+    end
+    alt hard mode elimination
+        H->>G: ReceiveAttack(nick, "freeze")
+    end
+    H->>G: UpdateState(nick, progress, hasError, isDone, wpm)
