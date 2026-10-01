@@ -11,8 +11,11 @@ const STATUS_HEIGHT = 64;
 const RESULT_GAP = 12;
 const SETTLE_TIME = 2200;
 
-const laneStatus = ({ progress }, isMoving) => {
-    if (progress >= 100) return 'done';
+const laneStatus = ({ progress, hasError, isDone }, struck, isMoving) => {
+    if (isDone && hasError) return 'out';
+    if (isDone || progress >= 100) return 'done';
+    if (struck === 'freeze') return 'frozen';
+    if (struck || hasError) return 'hit';
     return isMoving ? 'run' : 'idle';
 };
 
@@ -22,6 +25,7 @@ const Bar = ({ block, idx, progress, status }) => (
         <div className="tr-runner"><i className="tr-sprite" /></div>
     </div>
 );
+
 // The caret is one element moved over the text: its place is read from the layout after every render.
 const Quote = ({ position, showCaret, children }) => {
     const quoteRef = React.useRef(null);
@@ -213,14 +217,14 @@ function App() {
             <div className="tr-stat"><b>{player.progress}</b><span>%</span></div>
         </div>
 
-        <Bar block="progress" idx={0} progress={player.progress} status={laneStatus(player, isRacing && player.input.length > 0)} />
+        <Bar block="progress" idx={0} progress={player.progress} status={laneStatus({ ...player, isDone: player.isOut }, null, isRacing && player.input.length > 0)} />
 
         <div className="tr-card" data-block="opponents">
             <h3>Opponents</h3>
             {opponents.length > 0 ? (
                 opponents.map((opponentNick, index) => {
                     const stats = room.opponents?.[opponentNick] || { progress: 0, wpm: 0 };
-                    const status = laneStatus(stats, isRacing);
+                    const status = laneStatus(stats, room.struck[opponentNick], isRacing);
                     return (
                         <div key={index} className="tr-opp" data-status={status}>
                             <div className="tr-opp-head">
@@ -287,6 +291,12 @@ function App() {
                     <div data-el="attack">
                         <Icon name={player.debuff} />
                         <span>Attacked with: <b>{player.debuff}</b></span>
+                    </div>
+                )}
+                {player.isOut && !player.debuff && !isFinished && (
+                    <div data-el="out">
+                        <Icon name="error" />
+                        <span>Eliminated</span>
                     </div>
                 )}
             </div>
