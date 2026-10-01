@@ -217,39 +217,12 @@ function App() {
             )}
         </div>
 
-        {game.countdown > 0 && (
-            <div style={{ textAlign: 'center', fontSize: '64px', color: 'var(--orange)', fontFamily: 'var(--mono)', fontWeight: 'bold', marginBottom: '10px', textShadow: 'var(--orange-glow)' }}>
-                {game.countdown}
-            </div>
-        )}
-
-        {game.countdown === 0 && player.input.length === 0 && game.status !== 'finished' && (
-            <div style={{ textAlign: 'center', fontSize: '42px', color: 'var(--green)', fontFamily: 'var(--mono)', fontWeight: 'bold', marginBottom: '10px', height: '76px', display: 'flex', alignItems: 'center', justifyContent: 'center', textShadow: 'var(--green-glow)', animation: 'fadeIn 0.3s ease-out' }}>
-                START!
-            </div>
-        )}
-
-        {game.countdown === 0 && player.input.length > 0 && game.status !== 'finished' && (
-            <div style={{ height: '86px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {game.timeRemaining !== null && game.timeRemaining > 0 && (
-                    <div style={{
-                        textAlign: 'center',
-                        fontSize: '36px', 
-                        color: 'var(--red)',
-                        fontFamily: 'var(--mono)',
-                        fontWeight: 'bold',
-                        textShadow: 'var(--red-glow)',
-                        animation: 'pulse 1s infinite'
-                    }}>
-                        Time to end: {game.timeRemaining}s
-                    </div>
-                )}
-            </div>
-        )}
-
-        {game.timeRemaining === 0 && game.status !== 'finished' && (
-            <div style={{ textAlign: 'center', fontSize: '28px', color: 'var(--orange)', fontFamily: 'var(--mono)', fontWeight: 'bold', animation: 'pulse 0.5s infinite' }}>
-             FINISHING RACE...
+        {!isFinished && (
+            <div className="tr-status">
+                {phase === 'count' && <div data-el="count">{game.countdown}</div>}
+                {phase === 'go' && <div data-el="go">START!</div>}
+                {phase === 'overtime' && <div data-el="timer">Time to end: <b>{game.timeRemaining}</b>s</div>}
+                {phase === 'finishing' && <div data-el="finishing">FINISHING RACE...</div>}
             </div>
         )}
 
@@ -264,59 +237,63 @@ function App() {
             </div>
         )}
 
-        <div className={`text-display ${player.debuff === 'chaos' ? 'chaos-active' : ''}`}>
-            {actions.renderHighlightedText()}
-        </div>
-
-        {player.buff === 'shield' && game.status !== 'finished' && (
-            <div style={{ color: 'var(--gold)', fontSize: '16px', textAlign: 'center', fontWeight: 'bold', marginBottom: '15px', textTransform: 'uppercase', textShadow: '0 0 10px var(--gold)', animation: 'fadeIn 0.3s ease-out', letterSpacing: '2px' }}>
-                SHIELD ACTIVE! 
+        <div className="tr-typing">
+            <div className={`text-display ${player.debuff === 'chaos' ? 'chaos-active' : ''}`}>
+                {actions.renderHighlightedText()}
             </div>
-        )}
 
-        {player.debuff && game.status !== 'finished' && (
-            <div style={{ color: 'var(--red)', fontSize: '16px', textAlign: 'center', fontWeight: 'bold', marginBottom: '15px', textTransform: 'uppercase', textShadow: 'var(--red-glow)', animation: 'fadeIn 0.3s ease-out', letterSpacing: '2px' }}>
-                ATTACKED WITH: {player.debuff}
-            </div>
-        )}
-
-        <input
-            ref={inputRef}
-            type="text"
-            value={player.input}
-            onChange={actions.handleInputChange}
-            onKeyDown={actions.handleSpecialKeys}
-            disabled={game.status === 'finished' || game.countdown > 0 || player.debuff === 'freeze'}
-            className={`cyber-input race-input ${player.hasError ? 'error' : ''} ${player.buff === 'shield' ? 'shield-active' : ''} ${player.debuff === 'freeze' ? 'freeze-active' : ''}`}
-            style={{ opacity: game.countdown > 0 ? 0.4 : 1 }}
-            placeholder={game.countdown > 0 ? "Prepare..." : "Start typing..."}
-            onPaste={(e) => e.preventDefault()}
-            onBlur={() => {
-                if (game.status === 'racing' && player.debuff !== 'freeze') {
-                    inputRef.current?.focus();
-                }
-            }}
-            autoFocus={game.status === 'racing'}
-        />
-
-        {game.status !== 'finished' && room.settings.powerUpsEnabled && (
-            <>
-                <div className="progress-track" style={{ height: '4px', marginTop: '20px' }}>
-                    <div
-                        className="progress-fill"
-                        style={{
-                            width: `${computed.powerUpProgress || 0}%`,
-                            background: player.powerUp ? 'var(--purple)' : 'var(--cyan)',
-                            boxShadow: player.powerUp ? 'var(--purple-glow)' : 'var(--cyan-glow)'
-                        }}
-                    />
-                </div>
-                {player.powerUp && (
-                    <div style={{ textAlign: 'center', color: 'var(--purple)', fontFamily: 'var(--ui)', fontSize: '13px', marginTop: '10px', fontWeight: 'bold', textTransform: 'uppercase', textShadow: 'var(--purple-glow)', animation: 'pulse 1.5s infinite', letterSpacing: '2px' }}>
-                        Power-up ready: {player.powerUp} (Press CTRL)
+            <div className="tr-banners" aria-live="polite">
+                {player.buff === 'shield' && !isFinished && (
+                    <div data-el="shield">
+                        <Icon name="shield" />
+                        <span>Shield active!</span>
                     </div>
                 )}
-            </>
+                {player.debuff && !isFinished && (
+                    <div data-el="attack">
+                        <Icon name={player.debuff} />
+                        <span>Attacked with: <b>{player.debuff}</b></span>
+                    </div>
+                )}
+            </div>
+
+            <input
+                ref={inputRef}
+                type="text"
+                value={player.input}
+                onChange={actions.handleInputChange}
+                onKeyDown={actions.handleSpecialKeys}
+                disabled={isFinished || game.countdown > 0 || player.debuff === 'freeze'}
+                className="tr-input tr-race"
+                placeholder={game.countdown > 0 ? "Prepare..." : "Start typing..."}
+                aria-label="Type the text shown above"
+                autoComplete="off"
+                autoCapitalize="off"
+                autoCorrect="off"
+                spellCheck={false}
+                onPaste={(e) => e.preventDefault()}
+                onBlur={() => {
+                    if (game.status === 'racing' && player.debuff !== 'freeze') {
+                        inputRef.current?.focus();
+                    }
+                }}
+                autoFocus={game.status === 'racing'}
+            />
+        </div>
+
+        {!isFinished && room.settings.powerUpsEnabled && (
+            <div
+                className="tr-powerup"
+                style={{ '--c': (computed.powerUpProgress || 0) / 100 }}
+            >
+                <div className="tr-bar"><div className="tr-bar-fill" /></div>
+                {player.powerUp && (
+                    <div data-el="pu-ready">
+                        <Icon name={player.powerUp} />
+                        <span>Power-up ready: <b>{player.powerUp}</b> <span className="tr-key">(Press CTRL)</span></span>
+                    </div>
+                )}
+            </div>
         )}
 
         {game.status === 'finished' && (

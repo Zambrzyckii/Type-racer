@@ -1211,6 +1211,179 @@ body {
   font-style: italic;
   color: var(--c-text-dim);
 }
+
+/* Status: one slot of fixed height for the countdown, START!, the timer and FINISHING.
+   The pixel face has one weight, so the browser must not fake a bold one. */
+.tr-status {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  height: var(--status-h);
+  font: 400 40px/1 var(--sk-f-pixel);
+  font-synthesis: none;
+  text-align: center;
+  pointer-events: none;
+}
+.tr-status > * {
+  grid-area: 1 / 1;
+}
+.tr-status [data-el="count"] {
+  font-size: var(--fs-count);
+  color: var(--sk-sun);
+}
+.tr-status [data-el="go"] {
+  font-size: 80px;
+  color: var(--sk-mint);
+}
+.tr-status [data-el="timer"] {
+  padding: 6px 18px;
+  font-size: 36px;
+  font-variant-numeric: tabular-nums;
+  color: #2b0b07;
+  background: var(--sk-coral);
+  border-radius: 10px;
+  animation: amb-pulse 1s ease-in-out infinite;
+}
+.tr-status [data-el="finishing"] {
+  color: var(--sk-sun);
+}
+
+/* The typing group reads as the laptop's screen */
+.tr-typing {
+  position: relative;
+}
+/* Banners keep their height, so the input does not move while typing */
+.tr-banners {
+  display: grid;
+  place-items: center;
+  height: var(--banner-h);
+  font: 600 16px/1 var(--f-body);
+  letter-spacing: 0.01em;
+  text-align: center;
+}
+.tr-banners > * {
+  grid-area: 1 / 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.tr-banners [data-el] {
+  padding: 4px 12px;
+  font-size: 14px;
+  background: rgba(4, 20, 38, 0.62);
+  border: 1px solid;
+  border-radius: 8px;
+}
+.tr-banners [data-el="shield"] {
+  color: var(--c-shield);
+  border-color: rgba(255, 212, 71, 0.7);
+  animation: fx-fade-in 120ms both;
+}
+.tr-banners [data-el="attack"],
+.tr-banners [data-el="out"] {
+  color: var(--c-error);
+  border-color: rgba(255, 138, 122, 0.7);
+  animation: fx-fade-in 160ms both;
+}
+.tr-race {
+  display: block;
+  width: 100%;
+  padding: 16px;
+  font-size: 19px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.1);
+  border-width: 2px;
+  border-radius: 12px;
+}
+.tr-race:disabled {
+  opacity: 0.62;
+}
+.tr-root[data-err="1"] .tr-race {
+  border-color: var(--sk-coral);
+  box-shadow: 0 0 0 3px rgba(255, 138, 122, 0.28);
+  animation: fx-nudge 200ms var(--e-out);
+}
+.tr-root[data-buff="shield"] .tr-race {
+  border-color: var(--sk-sun);
+  box-shadow: 0 0 0 3px rgba(255, 212, 71, 0.3),
+    0 0 22px rgba(255, 212, 71, 0.35);
+}
+.tr-root[data-debuff="freeze"] .tr-race {
+  background: rgba(168, 230, 255, 0.2);
+  border-color: var(--sk-ice);
+  box-shadow: 0 0 0 3px rgba(168, 230, 255, 0.3);
+  opacity: 1;
+}
+
+/* Power-up: five dashes charge up, then a chip names what is held */
+.tr-powerup {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 40px;
+  margin-top: 12px;
+}
+.tr-powerup .tr-bar {
+  flex: none;
+  width: 220px;
+  height: var(--px);
+  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.24) 0 36px, transparent 36px 44px);
+}
+.tr-powerup .tr-bar::after {
+  display: none;
+}
+.tr-powerup .tr-bar-fill {
+  width: 100%;
+  background: repeating-linear-gradient(90deg, var(--sk-sun) 0 36px, transparent 36px 44px);
+  clip-path: inset(0 calc((1 - var(--c, 0)) * 100%) 0 0);
+  transition: clip-path 160ms var(--e-out);
+}
+[data-el="pu-ready"] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px 12px 6px 9px;
+  font: 600 14px/1 var(--f-body);
+  letter-spacing: 0.01em;
+  color: #fff;
+  background: rgba(4, 20, 38, 0.62);
+  border: 1px solid rgba(255, 212, 71, 0.7);
+  border-radius: 10px;
+}
+[data-el="pu-ready"] .tr-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--sk-sun);
+}
+[data-el="pu-ready"] b {
+  color: var(--sk-sun);
+  text-transform: capitalize;
+}
+.tr-key {
+  margin-left: 6px;
+  padding: 2px 7px;
+  font: 700 11px/1.4 var(--f-mono);
+  color: var(--sk-ink);
+  background: #fff;
+  border-radius: 5px;
+  box-shadow: 0 2px 0 rgba(8, 36, 64, 0.55);
+}
+@keyframes fx-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+@keyframes fx-nudge {
+  25% {
+    transform: translateX(-5px);
+  }
+  60% {
+    transform: translateX(4px);
+  }
+}
 @keyframes fx-hit {
   0% {
     transform: translate(-2px, 0);
@@ -1253,6 +1426,13 @@ body {
   }
   .tr-screen[data-id="race"] {
     padding: 14px;
+  }
+  .tr-status [data-el="go"] {
+    font-size: 60px;
+  }
+  .tr-powerup {
+    flex-direction: column;
+    gap: 8px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
