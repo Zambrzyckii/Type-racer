@@ -1,14 +1,16 @@
 import React, { useState } from "react";
+import { useSwap } from "./Swap";
 
 function Auth({ onLoginSuccess }) {
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(null);
+  const [card, swapState, onSwapEnd] = useSwap({ isLoginMode, message }, isLoginMode);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage("Sending...");
+    setMessage({ tone: "info", text: "Sending..." });
 
     const endpoint = isLoginMode ? "/api/Login" : "/api/Register";
     const url = `${endpoint}`;
@@ -29,10 +31,10 @@ function Auth({ onLoginSuccess }) {
           localStorage.setItem("token", data.token || data.Token);
           localStorage.setItem("username", username);
 
-          setMessage(`Logged as ${username}`);
+          setMessage({ tone: "ok", text: `Logged as ${username}` });
           setTimeout(() => onLoginSuccess(username), 1000);
         } else {
-          setMessage("Account created, please log in");
+          setMessage({ tone: "ok", text: "Account created, please log in" });
           setIsLoginMode(true);
           setPassword("");
         }
@@ -43,103 +45,69 @@ function Auth({ onLoginSuccess }) {
           const jsonError = JSON.parse(errorText);
           parsedError = jsonError.title || errorText;
         } catch {}
-        setMessage("Error: " + parsedError);
+        setMessage({ tone: "error", text: "Error: " + parsedError });
       }
     } catch (error) {
-      setMessage("Connection error: Is backend running?");
+      setMessage({ tone: "error", text: "Connection error: Is backend running?" });
     }
   };
 
   return (
-    <div style={{ width: "100%", padding: "10px" }}>
-      <h2 style={{
-        color: "var(--cyan)",
-        fontFamily: "var(--mono)",
-        textTransform: "uppercase",
-        letterSpacing: "4px",
-        marginBottom: "30px",
-        textShadow: "var(--cyan-glow)"
-      }}>
-        {isLoginMode ? "Login" : "Register"}
-      </h2>
-      
-      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+    <div
+      className="tr-panel"
+      data-block="auth"
+      data-mode={card.isLoginMode ? "login" : "register"}
+      data-state={swapState}
+      data-dir={isLoginMode ? "back" : "fwd"}
+      onAnimationEnd={onSwapEnd}
+    >
+      <h2>{card.isLoginMode ? "Login" : "Register"}</h2>
+      <p className="tr-sub">
+        {card.isLoginMode ? "Welcome back, racer." : "Pick the name other racers will see."}
+      </p>
+
+      <form onSubmit={handleSubmit}>
         <input
           type="text"
-          placeholder="PLAYER NAME"
+          placeholder={card.isLoginMode ? "PLAYER NAME" : "CHOOSE A NAME"}
+          aria-label="Player name"
+          autoComplete="username"
+          spellCheck={false}
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           required
-          className="cyber-input"
-          style={{ width: "100%", textAlign: "center", fontSize: "18px", letterSpacing: "2px" }}
+          className="tr-input"
         />
         <input
           type="password"
-          placeholder="PASSWORD"
+          placeholder={card.isLoginMode ? "PASSWORD" : "CHOOSE A PASSWORD"}
+          aria-label="Password"
+          autoComplete={card.isLoginMode ? "current-password" : "new-password"}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          className="cyber-input"
-          style={{ width: "100%", textAlign: "center", fontSize: "18px", letterSpacing: "2px" }}
+          className="tr-input"
         />
-        <button
-          type="submit"
-          style={{
-            marginTop: "10px",
-            padding: "15px",
-            fontSize: "18px",
-            fontFamily: "var(--mono)",
-            fontWeight: "bold",
-            letterSpacing: "3px",
-            color: isLoginMode ? "var(--cyan)" : "var(--green)",
-            border: `1px solid ${isLoginMode ? 'var(--cyan)' : 'var(--green)'}`,
-            background: isLoginMode ? "rgba(0,240,255,0.05)" : "rgba(0,255,140,0.05)",
-            boxShadow: isLoginMode ? "var(--cyan-glow)" : "var(--green-glow)",
-            cursor: "pointer",
-            transition: "all 0.2s ease",
-            textTransform: "uppercase",
-            borderRadius: "6px"
-          }}
-          onMouseEnter={(e) => {
-              e.target.style.background = isLoginMode ? "rgba(0,240,255,0.15)" : "rgba(0,255,140,0.15)";
-              e.target.style.transform = "scale(1.02)";
-          }}
-          onMouseLeave={(e) => {
-              e.target.style.background = isLoginMode ? "rgba(0,240,255,0.05)" : "rgba(0,255,140,0.05)";
-              e.target.style.transform = "scale(1)";
-          }}
-        >
-          {isLoginMode ? "Log In" : "Create Account"}
+        <button type="submit" className="tr-btn" data-v="primary">
+          {card.isLoginMode ? "Log in" : "Create account"}
         </button>
       </form>
 
-      {message && (
-        <p style={{ marginTop: "20px", color: "var(--orange)", fontFamily: "var(--mono)", fontWeight: "bold" }}>
-          {message}
+      {card.message && (
+        <p className="tr-msg" data-tone={card.message.tone} role="status">
+          {card.message.text}
         </p>
       )}
 
-      <div style={{ marginTop: "30px", borderTop: "1px solid var(--border)", paddingTop: "20px" }}>
+      <div className="tr-divider">
         <button
+          className="tr-link"
           onClick={() => {
             setIsLoginMode(!isLoginMode);
-            setMessage("");
+            setMessage(null);
           }}
-          style={{
-            background: "none",
-            border: "none",
-            color: "rgba(255,255,255,0.4)",
-            cursor: "pointer",
-            fontFamily: "var(--ui)",
-            fontSize: "14px",
-            letterSpacing: "1px",
-            textTransform: "uppercase",
-            transition: "color 0.2s"
-          }}
-          onMouseEnter={(e) => e.target.style.color = "var(--cyan)"}
-          onMouseLeave={(e) => e.target.style.color = "rgba(255,255,255,0.4)"}
         >
-          {isLoginMode ? "NEED AN ACCOUNT? REGISTER" : "HAVE AN ACCOUNT? LOG IN"}
+          {card.isLoginMode ? "NEED AN ACCOUNT? REGISTER" : "HAVE AN ACCOUNT? LOG IN"}
         </button>
       </div>
     </div>

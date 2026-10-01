@@ -1,13 +1,38 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { Fragment, useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { HubConnectionBuilder } from "@microsoft/signalr";
+
+// A long token may wrap after one of these, once it is past its 14th character.
+const BREAK_AFTER = ".(,=>/";
+const NOTE_TTL = 2800;
+const NOTE_LEAVE = 400;
+const MAX_NOTES = 3;
+
+const capitalize = (text) => text.charAt(0).toUpperCase() + text.slice(1);
+const effectTime = (power) => (power === "bomb" ? 1000 : 3000);
 
 export const useGameLogic = () => {
   const [connection, setConnection] = useState(null);
   const inputRef = useRef(null);
-  const [session, setSession] = useState({ isAuth: false, username: "" });
-  const [room, setRoom] = useState({ code: "", isJoined: false, players: [], chat: [], opponents: {}, host: "", settings: { powerUpsEnabled: false, hardMode: false, secondsToEnd: 0 } });
+  const [session, setSession] = useState(() => {
+    const t = localStorage.getItem("token"), u = localStorage.getItem("username");
+    const isAuth = !!t && t !== "undefined" && !!u && u !== "undefined";
+    return { isAuth, username: isAuth ? u : "" };
+  });
+  const [room, setRoom] = useState({ code: "", isJoined: false, players: [], chat: [], opponents: {}, struck: {}, host: "", joinError: "", settings: { powerUpsEnabled: false, hardMode: false, secondsToEnd: 0 } });
   const [game, setGame] = useState({ status: "lobby", text: "Loading...", countdown: 0, winner: "", leaderboard: [], timeRemaining: null });
-  const [player, setPlayer] = useState({ input: "", progress: 0, wpm: 0, hasError: false, totalKeys: 0, wrongKeys: 0, powerUp: null, debuff: null, buff: null });
+  const [player, setPlayer] = useState({ input: "", progress: 0, wpm: 0, hasError: false, totalKeys: 0, wrongKeys: 0, powerUp: null, swaps: 0, blocked: 0, isOut: false, debuff: null, buff: null });
+
+  const [notes, setNotes] = useState([]);
+  const noteId = useRef(0);
+  const latest = useRef(null);
+  latest.current = { room, player };
+
+  const addNote = useCallback((note) => {
+    const id = ++noteId.current;
+    setNotes(list => [...list.slice(1 - MAX_NOTES), { ...note, id }]);
+    setTimeout(() => setNotes(list => list.map(n => (n.id === id ? { ...n, leaving: true } : n))), NOTE_TTL);
+    setTimeout(() => setNotes(list => list.filter(n => n.id !== id)), NOTE_TTL + NOTE_LEAVE);
+  }, []);
 
   const powerUpProgress = useMemo(() => {
     if (player.powerUp) return 100;
@@ -16,7 +41,7 @@ export const useGameLogic = () => {
     return correct > 0 && correct % 5 === 0 ? 100 : ((correct % 5) / 5) * 100;
   }, [player.input, game.text, player.powerUp]);
 
-  const accuracy = player.totalKeys > 0 ? Math.round(((player.totalKeys - player.wrongKeys) / player.totalKeys) * 100) : 67;
+  const accuracy = player.totalKeys > 0 ? Math.round(((player.totalKeys - player.wrongKeys) / player.totalKeys) * 100) : 100;
 
   useEffect(() => {
     const t = localStorage.getItem("token"), u = localStorage.getItem("username");
@@ -77,47 +102,54 @@ export const useGameLogic = () => {
     if (!connection) return;
     const handlers = {
       UpdateState: (st) => {
-        const n = st.playerNick || st.PlayerNick, p = st.progress ?? st.Progress, e = st.hasError ?? st.HasError, w = st.wpm ?? st.Wpm;
-        if (n === localStorage.getItem("username")) setPlayer(pl => ({ ...pl, progress: p, hasError: e, wpm: w }));
-        else setRoom(r => ({ ...r, opponents: { ...r.opponents, [n]: { progress: p, wpm: w } } }));
+        const n = st.playerNick || st.PlayerNick, p = st.progress ?? st.Progress, e = st.hasError ?? st.HasError, w = st.wpm ?? st.Wpm, d = st.isDone ?? st.IsDone;
+        if (n === localStorage.getItem("username")) setPlayer(pl => ({ ...pl, progress: p, hasError: e, wpm: w, isOut: e && d }));
+        else setRoom(r => ({ ...r, opponents: { ...r.opponents, [n]: { progress: p, wpm: w, hasError: e, isDone: d } } }));
       },
-      UpdatePlayersList: (d) => setRoom(r => ({ ...r, players: d.players || d.Players || [], host: d.host || d.Host || "" })),
+      UpdatePlayersList: (d) => {
+        const players = d.players || d.Players || [], known = latest.current.room.players;
+        if (known.length) players.filter(p => !known.includes(p)).forEach(p => addNote({ kind: "info", label: p, value: "joined the room" }));
+        setRoom(r => ({ ...r, players, host: d.host || d.Host || "" }));
+      },
       BackToLobby: () => {
         setGame(g => ({ ...g, status: "lobby", countdown: 0, winner: "", text: "Loading...", timeRemaining: null }));
-        setPlayer({ input: "", progress: 0, wpm: 0, hasError: false, totalKeys: 0, wrongKeys: 0, powerUp: null, debuff: null, buff: null });
-        setRoom(r => ({ ...r, opponents: {} }));
+        setPlayer({ input: "", progress: 0, wpm: 0, hasError: false, totalKeys: 0, wrongKeys: 0, powerUp: null, swaps: 0, blocked: 0, isOut: false, debuff: null, buff: null });
+        setRoom(r => ({ ...r, opponents: {}, struck: {} }));
       },
       GameOver: (w) => setGame(g => ({ ...g, winner: w, status: "finished" })),
-      PowerUpGranted: (p) => setPlayer(pl => ({ ...pl, powerUp: p })),
+      PowerUpGranted: (p) => setPlayer(pl => ({ ...pl, powerUp: p, swaps: pl.powerUp ? pl.swaps + 1 : 0 })),
       SetUpLobby: (s) => setRoom(r => ({ ...r, settings: { powerUpsEnabled: s.powerUpsEnabled ?? s.PowerUpsEnabled, hardMode: s.hardMode ?? s.HardMode, secondsToEnd: s.secondsToEnd ?? s.SecondsToEnd } })),
       SettingsUpdate: (s) => setRoom(r => ({ ...r, settings: { powerUpsEnabled: s.powerUpsEnabled ?? s.PowerUpsEnabled, hardMode: s.hardMode ?? s.HardMode, secondsToEnd: s.secondsToEnd ?? s.SecondsToEnd } })),
       ReceiveAttack: (t, pwr) => {
+        addNote(latest.current.player.buff === "shield"
+          ? { kind: "blocked", power: pwr, label: "Shield blocked", value: capitalize(pwr) }
+          : { kind: "hit", power: pwr, label: "You were hit", value: capitalize(pwr) });
         setPlayer(pl => {
-        	if (pl.buff === "shield") return { ...pl, buff:null };
+        	if (pl.buff === "shield") return { ...pl, buff:null, blocked: pl.blocked + 1 };
         	return pwr === "bomb" 
         	? { ...pl, input: pl.input.substring(0, Math.max(0,pl.input.length - 10)), debuff: "bomb"} : 
         	{ ...pl, debuff: pwr}; });
   			setTimeout(() => setPlayer(pl => pl.debuff === pwr ? { ...pl, debuff:null} : pl), 
-  			pwr ===  "bomb" ? 1000 : 3000);      	
+  			effectTime(pwr));      	
       },
       ReceiveDefense: (_, pwr) => { setPlayer(p => ({ ...p, buff: pwr })); setTimeout(() => setPlayer(p => ({ ...p, buff: null })), 1500); },
       ReceiveChatMessage: (s, txt) => setRoom(r => ({ ...r, chat: [...r.chat, { text: txt, sender: s, type: s === localStorage.getItem("username") ? "sent" : "received" }] })),
       LoadText: (txt) => {
         setGame(g => ({ ...g, text: txt, countdown: 3, status: "countdown", winner: "" }));
-        setPlayer({ input: "", progress: 0, wpm: 0, hasError: false, totalKeys: 0, wrongKeys: 0, powerUp: null, debuff: null, buff: null });
-        setRoom(r => ({ ...r, opponents: {} }));
+        setPlayer({ input: "", progress: 0, wpm: 0, hasError: false, totalKeys: 0, wrongKeys: 0, powerUp: null, swaps: 0, blocked: 0, isOut: false, debuff: null, buff: null });
+        setRoom(r => ({ ...r, opponents: {}, struck: {} }));
       }
     };
     connection.start().then(() => Object.entries(handlers).forEach(([k, v]) => connection.on(k, v))).catch(console.error);
     return () => Object.keys(handlers).forEach(k => connection.off(k));
-  }, [connection]);
+  }, [connection, addNote]);
 
   const invoke = (m, ...a) => connection?.state === "Connected" && connection.invoke(m, ...a);
 
   const actions = {
     setIsAuthenticated: v => setSession(s => ({ ...s, isAuth: v })),
     setCurrentPlayer: v => setSession(s => ({ ...s, username: v })),
-    setRoomCode: v => setRoom(r => ({ ...r, code: v })),
+    setRoomCode: v => setRoom(r => ({ ...r, code: v, joinError: "" })),
     handleInputChange: (e) => {
       if (game.status !== "racing" || player.debuff === "freeze") return;
       const t = e.target.value;
@@ -131,26 +163,48 @@ export const useGameLogic = () => {
         if (enemies.length) actions.handleUsePowerUp(enemies[Math.floor(Math.random() * enemies.length)]);
       }
     },
-    handleUsePowerUp: (t) => { invoke("UsePowerUp", room.code, session.username, t, player.powerUp); setPlayer(p => ({ ...p, powerUp: null })); },
+    handleUsePowerUp: (t) => {
+      const power = player.powerUp;
+      invoke("UsePowerUp", room.code, session.username, t, power);
+      setPlayer(p => ({ ...p, powerUp: null }));
+      setRoom(r => ({ ...r, struck: { ...r.struck, [t]: power } }));
+      setTimeout(() => setRoom(r => (r.struck[t] === power ? { ...r, struck: { ...r.struck, [t]: null } } : r)), effectTime(power));
+      addNote({ kind: "sent", power, label: `Sent to ${t}`, value: capitalize(power) });
+    },
     handleRestart: () => invoke("RestartGame"),
     sendChatMessage: m => invoke("SendChatMessage", room.code, session.username, m),
-    handleJoinRooms: async () => room.code.trim() && (await invoke("JoinRoom", room.code)) ? setRoom(r => ({ ...r, isJoined: true })) : alert("Game already started"),
+    handleJoinRooms: async () => {
+      const joined = room.code.trim() && (await invoke("JoinRoom", room.code));
+      setRoom(r => ({ ...r, isJoined: !!joined, joinError: joined ? "" : "Game already started" }));
+    },
+    handleLeaveRoom: async () => {
+      await invoke("LeaveRoom");
+      setRoom(r => ({ ...r, code: "", isJoined: false, players: [], opponents: {}, struck: {}, host: "", joinError: "" }));
+    },
     handleStart: () => invoke("StartRoomGame", room.code),
     handleChangeSettings: (p, h, s) => session.username === room.host && invoke("ChangeRoomSettings", room.code, p, h, s),
     renderHighlightedText: () => {
       let errIdx = player.input.length;
       for (let i = 0; i < player.input.length; i++) if (player.input[i] !== game.text[i]) { errIdx = i; break; }
-      return game.text.split("").map((char, i) => (
-        <span key={i} style={{
-          color: i < player.input.length ? (i < errIdx ? "#4caf50" : "#ffffff") : (i === player.input.length && game.status === "racing" ? "#ffffff" : "#777"),
-          backgroundColor: i < player.input.length && i >= errIdx ? "#f44336" : "transparent",
-          borderBottom: i === player.input.length && game.status === "racing" ? "3px solid #2196f3" : "none",
-          opacity: i > player.input.length ? "0.6" : "1",
-          paddingBottom: "2px", borderRadius: "2px"
-        }}>{char}</span>
-      ));
+      const stateAt = (i) => i >= player.input.length ? "todo" : i < errIdx ? "ok" : "bad";
+      let at = 0;
+      return game.text.split(/( )/).map((part) => {
+        const from = at;
+        at += part.length;
+        if (part === " ") return <span key={from} className="tr-c" data-s={stateAt(from)}> </span>;
+        return (
+          <span key={from} className="tr-w">
+            {part.split("").map((char, k) => (
+              <Fragment key={k}>
+                <span className="tr-c" data-s={stateAt(from + k)}>{char}</span>
+                {k >= 14 && k < part.length - 1 && BREAK_AFTER.includes(char) && <wbr />}
+              </Fragment>
+            ))}
+          </span>
+        );
+      });
     }
   };
 
-  return { session, room, game, player, computed: { accuracy, powerUpProgress }, actions, inputRef };
+  return { session, room, game, player, notes, computed: { accuracy, powerUpProgress }, actions, inputRef };
 };

@@ -15,7 +15,7 @@ Versions and scripts are read from [`typeracer-client/package.json`](../../typer
 | `npm run build` | produces a static production build in `build/` |
 | `npm test` | runs `react-scripts test` |
 
-Styling is a mix of a stylesheet ([`typeracer-client/src/App.css`](../../typeracer-client/src/App.css)) and inline `style` props set directly in JSX. [`typeracer-client/public/index.html`](../../typeracer-client/public/index.html) also loads Google Fonts links and a Tailwind CSS CDN `<script>` with an inline `tailwind.config`, in addition to the CRA-generated stylesheet.
+Styling lives in two stylesheets: [`typeracer-client/src/App.css`](../../typeracer-client/src/App.css) for the interface and [`typeracer-client/src/Scene.css`](../../typeracer-client/src/Scene.css) for the pixel-art backdrop. Elements carry `tr-*` classes (`sk-*` for the scene and effects), design tokens are CSS custom properties on `:root`, and inline `style` props are used only to pass custom properties such as `--p` (progress) to CSS. The current state is written as `data-*` attributes on the root element (`data-screen`, `data-phase`, `data-debuff`, `data-buff`, `data-err`), and the stylesheets react to them. [`typeracer-client/public/index.html`](../../typeracer-client/public/index.html) loads the Figtree, JetBrains Mono and Jersey 10 fonts from Google Fonts.
 
 ## Source layout
 
@@ -25,24 +25,29 @@ Styling is a mix of a stylesheet ([`typeracer-client/src/App.css`](../../typerac
 | [`typeracer-client/src/App.js`](../../typeracer-client/src/App.js) | Single screen component; renders Auth, join-room, lobby, and race/finished views conditionally based on hook state |
 | [`typeracer-client/src/Auth.js`](../../typeracer-client/src/Auth.js) | Login/register form, toggled between the two modes |
 | [`typeracer-client/src/GameLogic.js`](../../typeracer-client/src/GameLogic.js) | `useGameLogic` hook: all React state, the SignalR connection, HTTP calls, action handlers, and text-highlighting logic |
-| [`typeracer-client/src/App.css`](../../typeracer-client/src/App.css) | Stylesheet for panels, buttons, inputs, and debuff/buff animations |
+| [`typeracer-client/src/App.css`](../../typeracer-client/src/App.css) | Design tokens and the stylesheet for panels, buttons, inputs, the race view, effects and transitions |
+| [`typeracer-client/src/Scene.js`](../../typeracer-client/src/Scene.js), [`Scene.css`](../../typeracer-client/src/Scene.css) | Pixel-art backdrop built from layers; the `useArtScale` hook sizes one art pixel to a whole number of device pixels |
+| [`typeracer-client/src/Icon.js`](../../typeracer-client/src/Icon.js) | Inline SVG icons (pixelarticons, MIT) |
+| [`typeracer-client/src/Swap.js`](../../typeracer-client/src/Swap.js) | `useSwap` hook: shows a change in two phases (the old content leaves, the new one enters), used for the login/register card and for screen changes |
+| `typeracer-client/src/assets/scene/` | PNG artwork for the scene, the racers and the effects |
 
 `Game.css` and `logo.svg` are present in `src/` but are not imported by `index.js`, `App.js`, `Auth.js` or `GameLogic.js`. `App.test.js`, `setupTests.js`, `reportWebVitals.js` and `index.css` are the unmodified Create React App boilerplate.
 
 ## State model (useGameLogic)
 
-[`GameLogic.js`](../../typeracer-client/src/GameLogic.js) holds four `useState` objects plus derived/computed values:
+[`GameLogic.js`](../../typeracer-client/src/GameLogic.js) holds five pieces of `useState` state plus derived/computed values:
 
 | State | Fields (initial values) |
 |---|---|
-| `session` | `isAuth: false`, `username: ""` |
-| `room` | `code: ""`, `isJoined: false`, `players: []`, `chat: []`, `opponents: {}`, `host: ""`, `settings: { powerUpsEnabled: false, hardMode: false, secondsToEnd: 0 }` |
+| `session` | `isAuth`, `username`, read from `localStorage` on the first render |
+| `room` | `code: ""`, `isJoined: false`, `players: []`, `chat: []`, `opponents: {}`, `struck: {}`, `host: ""`, `joinError: ""`, `settings: { powerUpsEnabled: false, hardMode: false, secondsToEnd: 0 }` |
 | `game` | `status: "lobby"`, `text: "Loading..."`, `countdown: 0`, `winner: ""`, `leaderboard: []`, `timeRemaining: null` |
-| `player` | `input: ""`, `progress: 0`, `wpm: 0`, `hasError: false`, `totalKeys: 0`, `wrongKeys: 0`, `powerUp: null`, `debuff: null`, `buff: null` |
+| `player` | `input: ""`, `progress: 0`, `wpm: 0`, `hasError: false`, `totalKeys: 0`, `wrongKeys: 0`, `powerUp: null`, `swaps: 0`, `blocked: 0`, `isOut: false`, `debuff: null`, `buff: null` |
+| `notes` | `[]`; short notices (`id`, `kind`, `power`, `label`, `value`, `leaving`), at most three at a time, each removed after about three seconds |
 
 `computed` (via `useMemo`/plain expressions) exposes `accuracy` (from `totalKeys`/`wrongKeys`) and `powerUpProgress` (a 0–100 value driven by consecutive correctly typed characters). `inputRef` is a `useRef` attached to the race text input so the hook can force-focus it.
 
-`actions` exposes exactly these functions: `setIsAuthenticated`, `setCurrentPlayer`, `setRoomCode`, `handleInputChange`, `handleSpecialKeys`, `handleUsePowerUp`, `handleRestart`, `sendChatMessage`, `handleJoinRooms`, `handleStart`, `handleChangeSettings`, `renderHighlightedText`.
+`actions` exposes exactly these functions: `setIsAuthenticated`, `setCurrentPlayer`, `setRoomCode`, `handleInputChange`, `handleSpecialKeys`, `handleUsePowerUp`, `handleRestart`, `sendChatMessage`, `handleJoinRooms`, `handleLeaveRoom`, `handleStart`, `handleChangeSettings`, `renderHighlightedText`.
 
 The following diagram shows how `App.js` consumes the hook, and how the hook talks to the network.
 
@@ -60,17 +65,17 @@ The following diagram shows how `App.js` consumes the hook, and how the hook tal
   <img alt="View flow diagram" src="../diagrams/frontend-02-view-flow.svg">
 </picture>
 
-**Auth** (`!session.isAuth`): the login/register form from `Auth.js`, with a "Login"/"Register" heading, `PLAYER NAME` and `PASSWORD` inputs, a submit button ("Log In" or "Create Account"), and a toggle link between the two modes.
+**Auth** (`!session.isAuth`): the login/register card from `Auth.js`, with a "Login"/"Register" heading, name and password inputs, a submit button ("Log in" or "Create account"), a status message with a tone (`info`, `ok`, `error`), and a toggle link between the two modes.
 
-**JoinRoom** (`session.isAuth && !room.isJoined`): a "Join a Room" panel with an uppercase room-code input and a "JOIN GAME" button.
+**JoinRoom** (`session.isAuth && !room.isJoined`): a "Join a Room" panel with an uppercase room-code input and a "Join game" button. A failed join shows "Game already started" under the input (`room.joinError`).
 
-**Lobby** (`game.status === "lobby"`): shows the room code, a players list tagging the host as `[HOST]` and everyone else as `[PILOT]`, a settings panel (Power-Ups toggle, Hard Mode toggle, Time Limit +/- stepper) that is only editable by the host (`session.username === room.host`), and a host-only "START RACE" button.
+**Lobby** (`game.status === "lobby"`): shows the room code, a players list tagging the host as `[HOST]` and everyone else as `[PILOT]`, a settings panel (Power-Ups toggle, Hard Mode toggle, Time Limit +/- stepper) that is only editable by the host (`session.username === room.host`), a host-only "Start race" button, and a "Leave room" button that calls `LeaveRoom` and returns the player to the join screen.
 
 **Countdown** (`game.status === "countdown"`, `game.countdown > 0`): a large numeric countdown, followed by a transient "START!" message once it reaches zero.
 
-**Racing** (`game.status === "racing"`): a HUD row with WPM, accuracy % and progress %, a progress bar, an opponents panel with per-opponent progress bars and (when the local player holds a power-up) a "USE `<POWERUP>`" button per opponent, the highlighted race text, and the race input (`onPaste` calls `preventDefault`, blocking pasted text). When `room.settings.powerUpsEnabled` is on, a power-up progress bar and a "Power-up ready: `<name>` (Press CTRL)" hint are shown. If someone finishes early and `room.settings.secondsToEnd > 0`, a "Time to end: `<n>`s" countdown appears, followed by a "FINISHING RACE..." message once it hits zero.
+**Racing** (`game.status === "racing"`): a HUD row with WPM, accuracy % and progress %, the player's own lane, an opponents panel with one lane per opponent and (when the local player holds a power-up) a "Use `<power-up>`" button per opponent, the highlighted race text with a caret, and the race input (`onPaste` calls `preventDefault`, blocking pasted text). When `room.settings.powerUpsEnabled` is on, a power-up progress bar and a "Power-up ready: `<name>` (Press CTRL)" hint are shown. If someone finishes early and `room.settings.secondsToEnd > 0`, a "Time to end: `<n>`s" countdown appears, followed by a "FINISHING RACE..." message once it hits zero.
 
-**Finished** (`game.status === "finished"`): a results panel titled "VICTORY!" (for the winner) or "WINNER: `<name>`" (for everyone else), showing the player's average WPM and accuracy; a host-only "PLAY AGAIN" button; and, once the leaderboard has loaded, a "GLOBAL LEADERBOARD (TOP 10)" table with `#`, `NICKNAME`, `PLAYED`, `WIN RATE` and `BEST WPM` columns.
+**Finished** (`game.status === "finished"`): a results panel titled "VICTORY!" (for the winner) or "WINNER: `<name>`" (for everyone else), showing the player's average WPM and accuracy; a host-only "Play again" button; and, once the leaderboard has loaded, a "Global leaderboard (top 10)" table with `#`, `NICKNAME`, `PLAYED`, `WIN RATE` and `BEST WPM` columns.
 
 ## Server communication
 
@@ -93,23 +98,24 @@ Events handled (`connection.on`):
 
 | Event | Updates |
 |---|---|
-| `UpdateState` | the caller's own `player.progress`/`hasError`/`wpm` if the payload's player matches the local username, otherwise `room.opponents[name]` |
-| `UpdatePlayersList` | `room.players` and `room.host` |
-| `BackToLobby` | resets `game` to `status: "lobby"`, resets `player` to its initial values, and clears `room.opponents` |
+| `UpdateState` | the caller's own `player.progress`/`hasError`/`wpm`/`isOut` if the payload's player matches the local username, otherwise `room.opponents[name]` (`progress`, `wpm`, `hasError`, `isDone`) |
+| `UpdatePlayersList` | `room.players` and `room.host`; adds a note for each player who joined |
+| `BackToLobby` | resets `game` to `status: "lobby"`, resets `player` to its initial values, and clears `room.opponents` and `room.struck` |
 | `GameOver` | sets `game.winner` and `game.status = "finished"` |
-| `PowerUpGranted` | sets `player.powerUp` |
+| `PowerUpGranted` | sets `player.powerUp`; counts replacements of a held power-up in `player.swaps` |
 | `SetUpLobby` | sets `room.settings` (initial lobby setup) |
 | `SettingsUpdate` | sets `room.settings` (settings changed by host) |
-| `ReceiveAttack` | sets `player.debuff` (or trims `player.input` for `"bomb"`), unless `player.buff === "shield"`, in which case the shield is consumed instead |
+| `ReceiveAttack` | sets `player.debuff` (or trims `player.input` for `"bomb"`), unless `player.buff === "shield"`, in which case the shield is consumed and `player.blocked` is incremented; adds a note either way |
 | `ReceiveDefense` | sets `player.buff` for 1.5s |
 | `ReceiveChatMessage` | appends to `room.chat` |
-| `LoadText` | sets `game.text`, starts a 3-second `game.countdown`, sets `game.status = "countdown"`, and resets `player` and `room.opponents` |
+| `LoadText` | sets `game.text`, starts a 3-second `game.countdown`, sets `game.status = "countdown"`, and resets `player`, `room.opponents` and `room.struck` |
 
 Methods invoked (`invoke(...)`):
 
 | Method | Arguments |
 |---|---|
 | `JoinRoom` | `room.code` |
+| `LeaveRoom` | — |
 | `StartRoomGame` | `room.code` |
 | `ChangeRoomSettings` | `room.code`, `powerUpsEnabled`, `hardMode`, `secondsToEnd` |
 | `SendProgress` | current input string |
@@ -121,13 +127,13 @@ Methods invoked (`invoke(...)`):
 
 ### Authentication state
 
-`Auth.js` stores the JWT and username in `localStorage` (`token`, `username`) on a successful login. `GameLogic.js` restores `session` from `localStorage` on mount, clearing both keys if either is missing or the literal string `"undefined"`. `App.js` clears both keys on logout and resets `session` via `setIsAuthenticated(false)`/`setCurrentPlayer("")`.
+`Auth.js` stores the JWT and username in `localStorage` (`token`, `username`) on a successful login. `GameLogic.js` reads `session` from `localStorage` in the initial state, and an effect on mount clears both keys if either is missing or the literal string `"undefined"`. `App.js` clears both keys on logout and resets `session` via `setIsAuthenticated(false)`/`setCurrentPlayer("")`.
 
 ## Gameplay on the client
 
-After `LoadText` arrives, a 3-second countdown runs entirely client-side (`game.countdown`, decremented once per second), after which `game.status` flips to `"racing"` and the race input is focused. Every keystroke in the race input calls `SendProgress` with the full current text and locally tracks `totalKeys`/`wrongKeys` to compute the `accuracy` shown in the HUD; `player.wpm` itself comes from the server via `UpdateState`. A power-up is used either by pressing `Ctrl` (which targets a random opponent) or by clicking an opponent's "USE `<POWERUP>`" button.
+After `LoadText` arrives, a 3-second countdown runs entirely client-side (`game.countdown`, decremented once per second), after which `game.status` flips to `"racing"` and the race input is focused. Every keystroke in the race input calls `SendProgress` with the full current text and locally tracks `totalKeys`/`wrongKeys` to compute the `accuracy` shown in the HUD; `player.wpm` itself comes from the server via `UpdateState`. A power-up is used either by pressing `Ctrl` (which targets a random opponent) or by clicking an opponent's "Use `<power-up>`" button. Using one adds a "Sent to" note and marks the target's lane in `room.struck` for the length of the effect; this is local and optimistic, the server does not confirm that the attack landed.
 
-Debuffs received through `ReceiveAttack` render as CSS classes: `freeze` disables the input, `flashbang` adds `flashbang-active` to the game container, `chaos` adds `chaos-active` to the text display, and `bomb` adds `bomb-active` to the container while also trimming 10 characters off the player's own typed input. A `shield` buff (from `ReceiveDefense`) is shown with a "SHIELD ACTIVE!" banner and a `shield-active` input class, and consumes the next incoming attack instead of applying its debuff.
+Debuffs received through `ReceiveAttack` are written to `data-debuff` on the root element and drawn by CSS: `freeze` disables the input and frosts the typing area, `flashbang` flashes a full-screen overlay, `chaos` makes the letters of the text bob, and `bomb` shakes the app and shows an explosion at the caret while also trimming 10 characters off the player's own typed input. A `shield` buff (from `ReceiveDefense`) sets `data-buff`, is shown with a "Shield active!" banner and a highlighted input, and consumes the next incoming attack instead of applying its debuff. Lanes show a racer's state (`idle`, `run`, `hit`, `frozen`, `done`, `out`), derived in `App.js` from progress, `hasError`, `isDone` and `room.struck`.
 
 When a player reaches 100% progress (or an opponent does) and `room.settings.secondsToEnd > 0`, a local "time to end" countdown starts; when it reaches zero, the round is treated as finishing. When `game.status` becomes `"finished"`, the client posts the score to `/api/savescore` and refetches `/api/leaderboard` to refresh the results table.
 

@@ -47,6 +47,25 @@ public class GameHub(IHubContext<GameHub> _hubContext, JoinRoomService _joinRoom
        }
     }
 
+    public async Task LeaveRoom()
+    {
+        var cleanupResult = _performCleanupService.PerformCleanup(Context.ConnectionId);
+        if (!cleanupResult.isRemoved) return;
+
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, cleanupResult.roomCode);
+
+        if (!cleanupResult.isRommEmpty && cleanupResult.roomStateInfo != null)
+        {
+            var roomData = new
+            {
+                Players = cleanupResult.roomStateInfo.Players.Values.ToArray(),
+                Host = cleanupResult.roomStateInfo.Players.GetValueOrDefault(
+                    cleanupResult.roomStateInfo.HostConnection, "")
+            };
+            await Clients.Group(cleanupResult.roomCode).SendAsync("UpdatePlayersList", roomData);
+        }
+    }
+
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         string cid = Context.ConnectionId;
