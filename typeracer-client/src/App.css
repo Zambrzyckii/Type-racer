@@ -1633,6 +1633,24 @@ body {
   animation-name: fx-tick-b;
 }
 
+/* The race is over: the surface grows (App.js), the typing group slides down to make room and
+   the results arrive one after another */
+.tr-root[data-sk-fin] .tr-typing {
+  animation: fx-settle 520ms var(--e-inout) both;
+}
+.tr-root[data-sk-fin] .tr-result {
+  animation: fx-rise 460ms var(--e-out) 280ms both;
+}
+.tr-root[data-sk-fin] .tr-again {
+  animation: fx-rise 460ms var(--e-out) 460ms both;
+}
+.tr-root[data-sk-fin] .tr-board {
+  animation: fx-rise 480ms var(--e-out) 580ms both;
+}
+.tr-root[data-sk-fin] .tr-board tbody tr {
+  animation: fx-row 340ms var(--e-out) calc(720ms + var(--sk-row, 0) * 45ms) both;
+}
+
 /* Screens: the old one leaves, then the new one arrives (useSwap) */
 .tr-screen[data-state="leave"] {
   pointer-events: none;
@@ -1640,6 +1658,24 @@ body {
 }
 .tr-screen[data-state="enter"] {
   animation: tr-meadow-in 400ms var(--e-out) both;
+}
+
+@keyframes fx-settle {
+  from {
+    transform: translateY(calc(var(--sk-fin-shift, 0px) * -1));
+  }
+}
+@keyframes fx-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+}
+@keyframes fx-row {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
 }
 @keyframes tr-meadow-out {
   to {

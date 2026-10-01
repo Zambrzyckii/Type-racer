@@ -7,6 +7,9 @@ import { useSwap } from './Swap';
 import './App.css';
 
 const SNOWFLAKES = [9, 81, 34, 58, 22, 70, 46, 90];
+const STATUS_HEIGHT = 64;
+const RESULT_GAP = 12;
+const SETTLE_TIME = 2200;
 
 const laneStatus = ({ progress }, isMoving) => {
     if (progress >= 100) return 'done';
@@ -50,6 +53,10 @@ function App() {
         actions,
         inputRef
     } = useGameLogic();
+    const surfaceRef = React.useRef(null);
+    const surfaceHeight = React.useRef(0);
+    const [isSettling, setIsSettling] = React.useState(false);
+
 
     React.useEffect(() => {
         if (game.status === 'racing' && player.debuff !== 'freeze') {
@@ -349,7 +356,7 @@ function App() {
                             </thead>
                             <tbody>
                                 {game.leaderboard.map((p, index) => (
-                                    <tr key={index} data-rank={index + 1} data-self={p.username === session.username ? '1' : '0'}>
+                                    <tr key={index} data-rank={index + 1} data-self={p.username === session.username ? '1' : '0'} style={{ '--sk-row': index }}>
                                         <td>{index + 1}</td>
                                         <td>{p.username}</td>
                                         <td>{p.gamesPlayed}</td>
@@ -368,6 +375,24 @@ function App() {
 
     const [shown, swapState, onSwapEnd] = useSwap({ id: screen, body }, screen);
 
+    // The race surface opens up for the results instead of jumping to its new height.
+    React.useLayoutEffect(() => {
+        if (!isFinished) surfaceHeight.current = surfaceRef.current.offsetHeight;
+    });
+
+    React.useLayoutEffect(() => {
+        const surface = surfaceRef.current;
+        const result = surface.querySelector('.tr-result');
+        if (!isFinished || !result || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        surface.style.setProperty('--sk-fin-shift', `${result.offsetHeight + RESULT_GAP - STATUS_HEIGHT}px`);
+        surface.style.overflow = 'hidden';
+        const grow = surface.animate([{ height: `${surfaceHeight.current}px` }, { height: `${surface.offsetHeight}px` }], { duration: 520, easing: 'cubic-bezier(.65, 0, .35, 1)' });
+        grow.onfinish = grow.oncancel = () => { surface.style.overflow = ''; };
+        setIsSettling(true);
+        const timer = setTimeout(() => setIsSettling(false), SETTLE_TIME);
+        return () => clearTimeout(timer);
+    }, [isFinished]);
+
     return (
         <div
             className="tr-root"
@@ -376,6 +401,7 @@ function App() {
             data-debuff={player.debuff || undefined}
             data-buff={player.buff || undefined}
             data-err={player.hasError ? '1' : '0'}
+            data-sk-fin={isSettling ? '' : undefined}
         >
             <Scene />
             <div className="tr-app">
@@ -402,7 +428,7 @@ function App() {
                 </header>
 
                 <main className="tr-stage">
-                    <section className="tr-screen" data-id={shown.id} data-state={swapState} onAnimationEnd={onSwapEnd}>
+                    <section className="tr-screen" ref={surfaceRef} data-id={shown.id} data-state={swapState} onAnimationEnd={onSwapEnd}>
                         {shown.body}
                     </section>
                 </main>
