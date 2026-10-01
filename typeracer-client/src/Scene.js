@@ -38,8 +38,8 @@ const useArtScale = () => {
 
 const BACKDROP = [
   { src: sky, anchor: "bottom", repeat: true, w: 4, h: 210, y: 84 },
-  { src: cloudsFar, anchor: "bottom", repeat: true, w: 640, h: 60, y: 96, ox: 40 },
-  { src: cloudsNear, anchor: "bottom", repeat: true, w: 640, h: 176, y: 116, ox: -40 },
+  { src: cloudsFar, cls: "sk-drift", anchor: "bottom", repeat: true, w: 640, h: 60, y: 96, ox: 40, ms: 1000 },
+  { src: cloudsNear, cls: "sk-drift", anchor: "bottom", repeat: true, w: 640, h: 176, y: 116, ox: -40, ms: 520 },
   { src: town, anchor: "bottom", repeat: true, w: 640, h: 50, y: 93, ox: 60 },
   { src: treeline, anchor: "bottom", repeat: true, w: 640, h: 34, y: 75 },
   { src: ground, anchor: "bottom", repeat: true, w: 640, h: 92, ox: -320 },
@@ -50,15 +50,15 @@ const PROPS = [
   { src: bushA, anchor: "bottom-left", w: 58, h: 34, x: 58, y: 20 },
   { src: bushB, anchor: "bottom-right", w: 44, h: 26, x: 150, y: 14 },
   { src: shafts, cls: "sk-shafts", anchor: "top-right", w: 230, h: 250, x: 0, y: 0 },
-  { src: laptop, anchor: "bottom-right", frames: true, w: 136, h: 112, n: 2, x: 34, y: 6 },
-  { src: poppy, anchor: "bottom-right", w: 12, h: 13, x: 176, y: 8 },
-  { src: poppy, anchor: "bottom-right", w: 12, h: 13, x: 192, y: 3 },
-  { src: daisy, anchor: "bottom-right", w: 9, h: 9, x: 20, y: 2 },
-  { src: poppy, anchor: "bottom-left", w: 12, h: 13, x: 128, y: 10 },
-  { src: daisy, anchor: "bottom-left", w: 9, h: 9, x: 150, y: 12 },
-  { src: bell, anchor: "bottom-left", w: 9, h: 9, x: 166, y: 5 },
-  { src: daisy, anchor: "bottom-center", w: 9, h: 9, x: 36, y: 4 },
-  { src: bell, anchor: "bottom-center", w: 9, h: 9, x: -100, y: 9 },
+  { src: laptop, cls: "sk-frames sk-laptop", anchor: "bottom-right", frames: true, w: 136, h: 112, n: 2, x: 34, y: 6, dur: "1100ms" },
+  { src: poppy, cls: "sk-sway", anchor: "bottom-right", w: 12, h: 13, x: 176, y: 8, dur: "1900ms", lean: 7, delay: "-300ms" },
+  { src: poppy, cls: "sk-sway", anchor: "bottom-right", w: 12, h: 13, x: 192, y: 3, dur: "1600ms", lean: 9, delay: "-1100ms" },
+  { src: daisy, cls: "sk-sway", anchor: "bottom-right", w: 9, h: 9, x: 20, y: 2, dur: "1500ms", lean: 8, delay: "-700ms" },
+  { src: poppy, cls: "sk-sway", anchor: "bottom-left", w: 12, h: 13, x: 128, y: 10, dur: "1750ms", lean: 8, delay: "-1500ms" },
+  { src: daisy, cls: "sk-sway", anchor: "bottom-left", w: 9, h: 9, x: 150, y: 12, dur: "1450ms", lean: 7, delay: "-200ms" },
+  { src: bell, cls: "sk-sway", anchor: "bottom-left", w: 9, h: 9, x: 166, y: 5, dur: "2050ms", lean: 10, delay: "-900ms" },
+  { src: daisy, cls: "sk-sway", anchor: "bottom-center", w: 9, h: 9, x: 36, y: 4, dur: "1650ms", lean: 8, delay: "-1300ms" },
+  { src: bell, cls: "sk-sway", anchor: "bottom-center", w: 9, h: 9, x: -100, y: 9, dur: "1850ms", lean: 9, delay: "-500ms" },
 ];
 
 const CLOTH_COLUMNS = [0, 1, 2, 3, 4, 5, 6, 7];

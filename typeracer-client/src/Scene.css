@@ -50,9 +50,26 @@
   background-position-x: 0;
 }
 
+/* Clouds glide from right to left; --ms is the time one art pixel takes */
+.tr-layer.sk-drift {
+  right: auto;
+  width: calc(100% + var(--px) * var(--w));
+  animation: amb-drift calc(var(--w) * var(--ms) * 1ms) linear infinite;
+}
+.sk-frames {
+  animation: amb-frames var(--dur, 1s) steps(var(--n)) infinite;
+}
 .sk-shafts {
   opacity: 0.42;
+  animation: amb-breathe 9s ease-in-out infinite;
 }
+/* Flowers lean downwind and swing back: a shear around the foot of the stem */
+.sk-sway {
+  transform-origin: 50% 100%;
+  animation: amb-sway var(--dur, 1800ms) ease-in-out var(--delay, 0ms) infinite
+    alternate;
+}
+/* The flag flies downwind: each column of cloth rides the wave a little later and higher */
 .sk-flag {
   transform: scaleX(-1);
 }
@@ -72,4 +89,38 @@
   height: calc(var(--px) * 6);
   background: url(./assets/scene/flag.png) calc(var(--px) * (2 + var(--k)) * -1)
     0 / calc(var(--px) * 14) calc(var(--px) * 14) no-repeat;
+  animation: amb-wave 560ms ease-in-out calc(var(--k) * -125ms) infinite
+    alternate;
+}
+
+@keyframes amb-drift {
+  to {
+    transform: translateX(calc(var(--px) * var(--w) * -1));
+  }
+}
+@keyframes amb-frames {
+  to {
+    background-position-x: calc(var(--px) * var(--w) * var(--n) * -1);
+  }
+}
+@keyframes amb-breathe {
+  50% {
+    opacity: 0.26;
+  }
+}
+@keyframes amb-sway {
+  from {
+    transform: skewX(calc(var(--lean, 8) * -0.3deg));
+  }
+  to {
+    transform: skewX(calc(var(--lean, 8) * 1deg));
+  }
+}
+@keyframes amb-wave {
+  from {
+    transform: translateY(calc(var(--px) * (0.12 + var(--k) * 0.15) * -1));
+  }
+  to {
+    transform: translateY(calc(var(--px) * (0.12 + var(--k) * 0.15)));
+  }
 }
