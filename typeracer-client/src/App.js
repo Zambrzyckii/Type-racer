@@ -16,6 +16,26 @@ const Bar = ({ block, idx, progress, status }) => (
         <div className="tr-runner"><i className="tr-sprite" /></div>
     </div>
 );
+// The caret is one element moved over the text: its place is read from the layout after every render.
+const Quote = ({ position, showCaret, children }) => {
+    const quoteRef = React.useRef(null);
+
+    React.useLayoutEffect(() => {
+        const chars = quoteRef.current.querySelectorAll('.tr-c');
+        if (!chars.length) return;
+        const char = chars[Math.min(position, chars.length - 1)];
+        const pastEnd = position >= chars.length ? char.offsetWidth : 0;
+        quoteRef.current.style.setProperty('--caret-x', `${char.offsetLeft + pastEnd}px`);
+        quoteRef.current.style.setProperty('--caret-y', `${char.offsetTop}px`);
+    });
+
+    return (
+        <div className="tr-quote" ref={quoteRef}>
+            {children}
+            {showCaret && <i className="tr-caret" aria-hidden="true" />}
+        </div>
+    );
+};
 
 function App() {
     const {
@@ -238,9 +258,9 @@ function App() {
         )}
 
         <div className="tr-typing">
-            <div className={`text-display ${player.debuff === 'chaos' ? 'chaos-active' : ''}`}>
+            <Quote position={player.input.length} showCaret={isRacing && phase !== 'finishing'}>
                 {actions.renderHighlightedText()}
-            </div>
+            </Quote>
 
             <div className="tr-banners" aria-live="polite">
                 {player.buff === 'shield' && !isFinished && (

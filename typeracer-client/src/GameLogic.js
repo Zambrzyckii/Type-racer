@@ -1,5 +1,8 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { Fragment, useState, useEffect, useRef, useMemo } from "react";
 import { HubConnectionBuilder } from "@microsoft/signalr";
+
+// A long token may wrap after one of these, once it is past its 14th character.
+const BREAK_AFTER = ".(,=>/";
 
 export const useGameLogic = () => {
   const [connection, setConnection] = useState(null);
@@ -143,15 +146,23 @@ export const useGameLogic = () => {
     renderHighlightedText: () => {
       let errIdx = player.input.length;
       for (let i = 0; i < player.input.length; i++) if (player.input[i] !== game.text[i]) { errIdx = i; break; }
-      return game.text.split("").map((char, i) => (
-        <span key={i} style={{
-          color: i < player.input.length ? (i < errIdx ? "#4caf50" : "#ffffff") : (i === player.input.length && game.status === "racing" ? "#ffffff" : "#777"),
-          backgroundColor: i < player.input.length && i >= errIdx ? "#f44336" : "transparent",
-          borderBottom: i === player.input.length && game.status === "racing" ? "3px solid #2196f3" : "none",
-          opacity: i > player.input.length ? "0.6" : "1",
-          paddingBottom: "2px", borderRadius: "2px"
-        }}>{char}</span>
-      ));
+      const stateAt = (i) => i >= player.input.length ? "todo" : i < errIdx ? "ok" : "bad";
+      let at = 0;
+      return game.text.split(/( )/).map((part) => {
+        const from = at;
+        at += part.length;
+        if (part === " ") return <span key={from} className="tr-c" data-s={stateAt(from)}> </span>;
+        return (
+          <span key={from} className="tr-w">
+            {part.split("").map((char, k) => (
+              <Fragment key={k}>
+                <span className="tr-c" data-s={stateAt(from + k)}>{char}</span>
+                {k >= 14 && k < part.length - 1 && BREAK_AFTER.includes(char) && <wbr />}
+              </Fragment>
+            ))}
+          </span>
+        );
+      });
     }
   };
 
