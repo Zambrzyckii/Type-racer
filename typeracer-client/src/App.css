@@ -773,6 +773,26 @@ body {
       rotate(calc(var(--sk-dir, 1) * 2.5deg));
   }
 }
+
+/* Join */
+[data-id="join"] .tr-panel {
+  max-width: var(--col-join);
+  margin: 0 auto var(--gap);
+  text-align: center;
+}
+[data-el="code"] {
+  display: block;
+  width: 80%;
+  margin: 20px auto;
+  padding: 14px 8px 14px 18px;
+  font-size: 26px;
+  letter-spacing: 0.28em;
+  text-align: center;
+  text-transform: uppercase;
+}
+[data-action="join"] {
+  margin-top: 10px;
+}
 @media (max-width: 640px) {
   :root {
     --fs-count: 80px;
@@ -780,6 +800,9 @@ body {
   }
   .tr-user {
     padding-left: 10px;
+  }
+  [data-el="code"] {
+    width: 100%;
   }
 }
 @media (prefers-reduced-motion: reduce) {

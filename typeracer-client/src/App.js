@@ -36,18 +36,21 @@ function App() {
             actions.setCurrentPlayer(username);
         }} />
     ) : !room.isJoined ? (
-        <div className="glass-panel" style={{ textAlign: 'center', maxWidth: '500px', margin: '0 auto' }}>
-            <h2 className="subtitle" style={{ color: 'var(--cyan)' }}>Join a Room</h2>
+        <div className="tr-panel">
+            <h2>Join a Room</h2>
             <input
                 type="text"
-                className="cyber-input"
+                className="tr-input"
+                data-el="code"
                 value={room.code}
                 onChange={(e) => actions.setRoomCode(e.target.value.toUpperCase())}
                 placeholder="ENTER CODE"
-                style={{ width: '80%', margin: '20px auto', display: 'block', textAlign: 'center', fontSize: '24px', letterSpacing: '4px' }}
+                aria-label="Room code"
+                autoComplete="off"
+                spellCheck={false}
             />
-            <button className="btn btn-primary" onClick={actions.handleJoinRooms} style={{ fontSize: '1.2rem', padding: '15px 40px', marginTop: '10px' }}>
-                JOIN GAME
+            <button className="tr-btn" data-v="primary" data-action="join" onClick={actions.handleJoinRooms}>
+                Join game
             </button>
         </div>
     ) : game.status === 'lobby' ? (
