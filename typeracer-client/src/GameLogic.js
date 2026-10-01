@@ -16,7 +16,7 @@ export const useGameLogic = () => {
     return correct > 0 && correct % 5 === 0 ? 100 : ((correct % 5) / 5) * 100;
   }, [player.input, game.text, player.powerUp]);
 
-  const accuracy = player.totalKeys > 0 ? Math.round(((player.totalKeys - player.wrongKeys) / player.totalKeys) * 100) : 67;
+  const accuracy = player.totalKeys > 0 ? Math.round(((player.totalKeys - player.wrongKeys) / player.totalKeys) * 100) : 100;
 
   useEffect(() => {
     const t = localStorage.getItem("token"), u = localStorage.getItem("username");

@@ -5,6 +5,18 @@ import Icon from './Icon';
 import { useGameLogic } from './GameLogic';
 import './App.css';
 
+const laneStatus = ({ progress }, isMoving) => {
+    if (progress >= 100) return 'done';
+    return isMoving ? 'run' : 'idle';
+};
+
+const Bar = ({ block, idx, progress, status }) => (
+    <div className="tr-bar" data-block={block} data-idx={idx} data-status={status} style={{ '--p': progress / 100 }}>
+        <div className="tr-bar-fill" />
+        <div className="tr-runner"><i className="tr-sprite" /></div>
+    </div>
+);
+
 function App() {
     const {
         session,
@@ -30,6 +42,9 @@ function App() {
         : game.timeRemaining > 0 ? 'overtime'
         : 'typing';
     const isHost = session.username === room.host;
+    const isRacing = game.status === 'racing';
+    const isFinished = game.status === 'finished';
+    const opponents = room.players.filter(p => p !== session.username);
 
     const body = !session.isAuth ? (
         <Auth onLoginSuccess={(username) => {
@@ -160,51 +175,45 @@ function App() {
         </div>
     ) : (
     <>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', fontSize: '24px', fontWeight: 'bold', fontFamily: 'var(--mono)' }}>
-            <div style={{ color: 'var(--cyan)', width: '33%' }}>{player.wpm} WPM</div>
-            <div style={{ color: 'var(--orange)', width: '33%', textAlign: 'center' }}>{computed.accuracy}%</div>
-            <div style={{ color: 'var(--green)', width: '33%', textAlign: 'right' }}>{player.progress}%</div>
+        <div className="tr-stats">
+            <div className="tr-stat" data-stat="wpm"><b>{player.wpm}</b> <span>WPM</span></div>
+            <div className="tr-stat"><b>{computed.accuracy}</b><span>%</span></div>
+            <div className="tr-stat"><b>{player.progress}</b><span>%</span></div>
         </div>
 
-        <div className="progress-track" style={{ marginBottom: '30px' }}>
-            <div className="progress-fill" style={{ width: `${player.progress}%` }} />
-        </div>
+        <Bar block="progress" idx={0} progress={player.progress} status={laneStatus(player, isRacing && player.input.length > 0)} />
 
-        <div className="glass-panel-sm" style={{ marginBottom: '30px' }}>
-            <h3 style={{ color: 'rgba(255,255,255,0.4)', marginTop: 0, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '2px', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
-                Opponents
-            </h3>
-            {room.players.filter(p => p !== session.username).length > 0 ? (
-                room.players.filter(p => p !== session.username).map((opponentNick, index) => {
+        <div className="tr-card" data-block="opponents">
+            <h3>Opponents</h3>
+            {opponents.length > 0 ? (
+                opponents.map((opponentNick, index) => {
                     const stats = room.opponents?.[opponentNick] || { progress: 0, wpm: 0 };
+                    const status = laneStatus(stats, isRacing);
                     return (
-                        <div key={index} style={{ marginBottom: '16px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '15px', color: 'rgba(255,255,255,0.8)', marginBottom: '8px', fontFamily: 'var(--ui)' }}>
-                                <span style={{ fontWeight: 'bold' }}>{opponentNick}</span>
-                                <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                                    {player.powerUp && game.status !== 'finished' && (
-                                        <button 
-                                            className="btn btn-primary"
+                        <div key={index} className="tr-opp" data-status={status}>
+                            <div className="tr-opp-head">
+                                <span className="tr-name">{opponentNick}</span>
+                                <div className="tr-opp-side">
+                                    {player.powerUp && !isFinished && (
+                                        <button
+                                            className="tr-btn"
+                                            data-v="use"
                                             onMouseDown={(e) => e.preventDefault()}
                                             onClick={() => actions.handleUsePowerUp(opponentNick)}
-                                            style={{ padding: '4px 10px', fontSize: '11px', borderColor: 'var(--purple)', color: 'var(--purple)' }}
                                         >
-                                            USE {player.powerUp.toUpperCase()}
+                                            <Icon name={player.powerUp} />
+                                            {`Use ${player.powerUp}`}
                                         </button>
                                     )}
-                                    <span style={{ fontFamily: 'var(--mono)', color: 'var(--orange)' }}>{stats.wpm} WPM</span>
+                                    <span className="tr-opp-wpm"><b>{stats.wpm}</b> WPM</span>
                                 </div>
                             </div>
-                            <div className="progress-track" style={{ height: '6px' }}>
-                                <div className="progress-fill" style={{ width: `${stats.progress}%`, background: 'var(--orange)', boxShadow: 'var(--orange-glow)' }} />
-                            </div>
+                            <Bar idx={index + 1} progress={stats.progress} status={status} />
                         </div>
                     );
                 })
             ) : (
-                <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '14px', fontStyle: 'italic' }}>
-                    Solo run — no opponents
-                </div>
+                <div data-el="solo">Solo run — no opponents</div>
             )}
         </div>
 

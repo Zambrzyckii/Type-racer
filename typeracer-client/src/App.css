@@ -1006,9 +1006,238 @@ body {
   -webkit-appearance: none;
   margin: 0;
 }
+
+/* Race: one glass surface, the panels inside it are flat */
+.tr-screen[data-id="race"] {
+  margin-bottom: var(--gap);
+  padding: 22px 26px 24px;
+  background: var(--c-surface);
+  border: var(--bw) solid var(--c-border);
+  border-radius: var(--r-panel);
+  box-shadow: var(--shadow-panel);
+  -webkit-backdrop-filter: blur(var(--blur)) saturate(1.3);
+  backdrop-filter: blur(var(--blur)) saturate(1.3);
+}
+.tr-screen[data-id="race"] .tr-panel {
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.tr-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 12px;
+  font: 700 var(--fs-stat) / 1.2 var(--f-num);
+  font-variant-numeric: tabular-nums;
+}
+.tr-stat {
+  width: 33%;
+}
+.tr-stat:nth-child(2) {
+  text-align: center;
+}
+.tr-stat:nth-child(3) {
+  text-align: right;
+}
+.tr-stat b {
+  font-weight: 700;
+}
+.tr-stat span {
+  margin-left: 3px;
+  font: 600 12px/1 var(--f-body);
+  letter-spacing: 0.1em;
+  color: var(--c-text-dim);
+}
+.tr-stat[data-stat="wpm"] b {
+  color: var(--sk-sun);
+}
+
+/* Lanes: racers are insects crawling toward a checkered finish */
+.tr-bar {
+  position: relative;
+  height: calc(var(--px) * 5);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.22) 50%, transparent 0) 0 100% / calc(var(--px) * 4) var(--px) repeat-x,
+    rgba(255, 255, 255, 0.1);
+}
+.tr-bar::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: calc(var(--px) * 2);
+  background: conic-gradient(#fff 25%, #0f1b22 0 50%, #fff 0 75%, #0f1b22 0) 0 0 / calc(var(--px) * 2) calc(var(--px) * 2);
+}
+.tr-bar-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: calc(var(--p, 0) * (100% - var(--sk-u) * 11) + var(--sk-u) * 4);
+  background: linear-gradient(var(--c-self), var(--c-self)) 0 100% / 100% var(--px) no-repeat,
+    rgba(255, 212, 71, 0.2);
+  transition: width 260ms linear;
+}
+.tr-opp .tr-bar-fill {
+  background: linear-gradient(#fff, #fff) 0 100% / 100% var(--px) no-repeat,
+    rgba(255, 255, 255, 0.13);
+}
+.tr-runner {
+  position: absolute;
+  z-index: 1;
+  bottom: var(--px);
+  left: calc(var(--p, 0) * (100% - var(--sk-u) * 11));
+  width: calc(var(--sk-u) * 8);
+  height: calc(var(--sk-u) * 6);
+  pointer-events: none;
+  transition: left 260ms linear;
+}
+/* --sk-i picks the insect: one 16-pixel cell of the sheet, two walking frames each */
+.tr-sprite {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: url(./assets/scene/critters.png) calc(var(--sk-u) * var(--sk-i, 0) * -16) 0 / calc(var(--sk-u) * 96) 100% no-repeat;
+  image-rendering: pixelated;
+}
+.tr-bar[data-idx="1"],
+.tr-bar[data-idx="6"] {
+  --sk-i: 1;
+}
+.tr-bar[data-idx="2"] {
+  --sk-i: 2;
+}
+.tr-bar[data-idx="3"],
+.tr-bar[data-idx="7"] {
+  --sk-i: 3;
+}
+.tr-bar[data-idx="4"] {
+  --sk-i: 4;
+}
+.tr-bar[data-idx="5"],
+.tr-bar[data-idx="8"] {
+  --sk-i: 5;
+}
+.tr-bar[data-status="run"] .tr-sprite {
+  animation: amb-walk 320ms steps(2) infinite;
+}
+.tr-bar[data-status="hit"] .tr-sprite {
+  animation: fx-hit 260ms linear infinite;
+}
+.tr-bar[data-status="out"] .tr-sprite {
+  opacity: 0.8;
+  transform: rotate(180deg);
+}
+.tr-bar[data-status="done"] .tr-sprite {
+  animation: fx-hop 440ms var(--e-out) 2;
+}
+.tr-bar[data-status="frozen"] .tr-runner::after {
+  content: "";
+  position: absolute;
+  left: calc(var(--sk-u) * -1);
+  top: calc(var(--sk-u) * -1);
+  width: calc(var(--sk-u) * 10);
+  height: calc(var(--sk-u) * 8);
+  background: url(./assets/scene/ice.png) 0 0 / 100% 100% no-repeat;
+  image-rendering: pixelated;
+  opacity: 0.88;
+}
+[data-block="progress"] {
+  margin: calc(var(--px) * 3) 0 16px;
+}
+[data-block="opponents"] {
+  margin-bottom: 8px;
+  padding: 12px 18px 14px;
+}
+[data-block="opponents"] h3 {
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+}
+.tr-opp {
+  margin-bottom: 10px;
+}
+.tr-opp-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  min-height: 22px;
+  margin-bottom: var(--px);
+  font: 600 14px/1.2 var(--f-body);
+}
+.tr-opp-head .tr-name {
+  font-weight: 700;
+}
+.tr-opp[data-status="frozen"] .tr-name {
+  color: var(--sk-ice);
+}
+.tr-opp[data-status="done"] .tr-name::after {
+  content: " \2713";
+  color: var(--sk-mint);
+}
+.tr-opp-side {
+  display: flex;
+  align-items: center;
+  flex: none;
+  gap: 15px;
+}
+.tr-btn[data-v="use"] {
+  padding: 5px 10px 5px 8px;
+  font-size: 12px;
+  background: rgba(4, 20, 38, 0.55);
+  border-color: rgba(255, 212, 71, 0.8);
+  border-radius: 8px;
+}
+.tr-btn[data-v="use"]:hover:not(:disabled) {
+  background: rgba(255, 212, 71, 0.28);
+}
+.tr-btn[data-v="use"] .tr-icon {
+  vertical-align: -2px;
+  margin-right: 5px;
+  color: var(--sk-sun);
+}
+.tr-opp-wpm {
+  font-family: var(--f-num);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--c-text-dim);
+}
+.tr-opp-wpm b {
+  color: #fff;
+}
+[data-el="solo"] {
+  font-size: 14px;
+  font-style: italic;
+  color: var(--c-text-dim);
+}
+@keyframes fx-hit {
+  0% {
+    transform: translate(-2px, 0);
+  }
+  50% {
+    transform: translate(2px, -2px);
+  }
+  100% {
+    transform: translate(-2px, 0);
+  }
+}
+@keyframes fx-hop {
+  40% {
+    transform: translateY(calc(var(--sk-u) * -2));
+  }
+}
 @keyframes amb-pulse {
   50% {
     opacity: 0.82;
+  }
+}
+@keyframes amb-walk {
+  from {
+    background-position-x: calc(var(--sk-u) * var(--sk-i, 0) * -16);
+  }
+  to {
+    background-position-x: calc(var(--sk-u) * (var(--sk-i, 0) * -16 - 16));
   }
 }
 @media (max-width: 640px) {
@@ -1021,6 +1250,9 @@ body {
   }
   [data-el="code"] {
     width: 100%;
+  }
+  .tr-screen[data-id="race"] {
+    padding: 14px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
