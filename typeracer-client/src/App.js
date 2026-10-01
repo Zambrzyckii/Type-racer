@@ -49,6 +49,7 @@ function App() {
         room,
         game,
         player,
+        notes,
         computed,
         actions,
         inputRef
@@ -432,6 +433,15 @@ function App() {
                         {shown.body}
                     </section>
                 </main>
+            </div>
+            <div className="tr-toasts" aria-live="polite">
+                {notes.map((note) => (
+                    <div key={note.id} className="tr-toast" data-kind={note.kind} data-pu={note.power} data-state={note.leaving ? 'out' : undefined}>
+                        <Icon name={note.power || 'guest'} />
+                        <span className="tr-toast-k">{note.label}</span>
+                        <span className="tr-toast-v">{note.value}</span>
+                    </div>
+                ))}
             </div>
             <div className="tr-overlay" aria-hidden="true" />
         </div>

@@ -1,8 +1,13 @@
-import { Fragment, useState, useEffect, useRef, useMemo } from "react";
+import { Fragment, useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { HubConnectionBuilder } from "@microsoft/signalr";
 
 // A long token may wrap after one of these, once it is past its 14th character.
 const BREAK_AFTER = ".(,=>/";
+const NOTE_TTL = 2800;
+const NOTE_LEAVE = 400;
+const MAX_NOTES = 3;
+
+const capitalize = (text) => text.charAt(0).toUpperCase() + text.slice(1);
 
 export const useGameLogic = () => {
   const [connection, setConnection] = useState(null);
@@ -15,6 +20,18 @@ export const useGameLogic = () => {
   const [room, setRoom] = useState({ code: "", isJoined: false, players: [], chat: [], opponents: {}, host: "", joinError: "", settings: { powerUpsEnabled: false, hardMode: false, secondsToEnd: 0 } });
   const [game, setGame] = useState({ status: "lobby", text: "Loading...", countdown: 0, winner: "", leaderboard: [], timeRemaining: null });
   const [player, setPlayer] = useState({ input: "", progress: 0, wpm: 0, hasError: false, totalKeys: 0, wrongKeys: 0, powerUp: null, swaps: 0, blocked: 0, debuff: null, buff: null });
+
+  const [notes, setNotes] = useState([]);
+  const noteId = useRef(0);
+  const latest = useRef(null);
+  latest.current = { room, player };
+
+  const addNote = useCallback((note) => {
+    const id = ++noteId.current;
+    setNotes(list => [...list.slice(1 - MAX_NOTES), { ...note, id }]);
+    setTimeout(() => setNotes(list => list.map(n => (n.id === id ? { ...n, leaving: true } : n))), NOTE_TTL);
+    setTimeout(() => setNotes(list => list.filter(n => n.id !== id)), NOTE_TTL + NOTE_LEAVE);
+  }, []);
 
   const powerUpProgress = useMemo(() => {
     if (player.powerUp) return 100;
@@ -88,7 +105,11 @@ export const useGameLogic = () => {
         if (n === localStorage.getItem("username")) setPlayer(pl => ({ ...pl, progress: p, hasError: e, wpm: w }));
         else setRoom(r => ({ ...r, opponents: { ...r.opponents, [n]: { progress: p, wpm: w } } }));
       },
-      UpdatePlayersList: (d) => setRoom(r => ({ ...r, players: d.players || d.Players || [], host: d.host || d.Host || "" })),
+      UpdatePlayersList: (d) => {
+        const players = d.players || d.Players || [], known = latest.current.room.players;
+        if (known.length) players.filter(p => !known.includes(p)).forEach(p => addNote({ kind: "info", label: p, value: "joined the room" }));
+        setRoom(r => ({ ...r, players, host: d.host || d.Host || "" }));
+      },
       BackToLobby: () => {
         setGame(g => ({ ...g, status: "lobby", countdown: 0, winner: "", text: "Loading...", timeRemaining: null }));
         setPlayer({ input: "", progress: 0, wpm: 0, hasError: false, totalKeys: 0, wrongKeys: 0, powerUp: null, swaps: 0, blocked: 0, debuff: null, buff: null });
@@ -99,6 +120,9 @@ export const useGameLogic = () => {
       SetUpLobby: (s) => setRoom(r => ({ ...r, settings: { powerUpsEnabled: s.powerUpsEnabled ?? s.PowerUpsEnabled, hardMode: s.hardMode ?? s.HardMode, secondsToEnd: s.secondsToEnd ?? s.SecondsToEnd } })),
       SettingsUpdate: (s) => setRoom(r => ({ ...r, settings: { powerUpsEnabled: s.powerUpsEnabled ?? s.PowerUpsEnabled, hardMode: s.hardMode ?? s.HardMode, secondsToEnd: s.secondsToEnd ?? s.SecondsToEnd } })),
       ReceiveAttack: (t, pwr) => {
+        addNote(latest.current.player.buff === "shield"
+          ? { kind: "blocked", power: pwr, label: "Shield blocked", value: capitalize(pwr) }
+          : { kind: "hit", power: pwr, label: "You were hit", value: capitalize(pwr) });
         setPlayer(pl => {
         	if (pl.buff === "shield") return { ...pl, buff:null, blocked: pl.blocked + 1 };
         	return pwr === "bomb" 
@@ -117,7 +141,7 @@ export const useGameLogic = () => {
     };
     connection.start().then(() => Object.entries(handlers).forEach(([k, v]) => connection.on(k, v))).catch(console.error);
     return () => Object.keys(handlers).forEach(k => connection.off(k));
-  }, [connection]);
+  }, [connection, addNote]);
 
   const invoke = (m, ...a) => connection?.state === "Connected" && connection.invoke(m, ...a);
 
@@ -138,7 +162,12 @@ export const useGameLogic = () => {
         if (enemies.length) actions.handleUsePowerUp(enemies[Math.floor(Math.random() * enemies.length)]);
       }
     },
-    handleUsePowerUp: (t) => { invoke("UsePowerUp", room.code, session.username, t, player.powerUp); setPlayer(p => ({ ...p, powerUp: null })); },
+    handleUsePowerUp: (t) => {
+      const power = player.powerUp;
+      invoke("UsePowerUp", room.code, session.username, t, power);
+      setPlayer(p => ({ ...p, powerUp: null }));
+      addNote({ kind: "sent", power, label: `Sent to ${t}`, value: capitalize(power) });
+    },
     handleRestart: () => invoke("RestartGame"),
     sendChatMessage: m => invoke("SendChatMessage", room.code, session.username, m),
     handleJoinRooms: async () => {
@@ -170,5 +199,5 @@ export const useGameLogic = () => {
     }
   };
 
-  return { session, room, game, player, computed: { accuracy, powerUpProgress }, actions, inputRef };
+  return { session, room, game, player, notes, computed: { accuracy, powerUpProgress }, actions, inputRef };
 };
