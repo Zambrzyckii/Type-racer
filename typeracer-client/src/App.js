@@ -1,4 +1,5 @@
 import React from 'react';
+import confetti from 'canvas-confetti';
 import Auth from './Auth';
 import Scene from './Scene';
 import Icon from './Icon';
@@ -10,6 +11,19 @@ const SNOWFLAKES = [9, 81, 34, 58, 22, 70, 46, 90];
 const STATUS_HEIGHT = 64;
 const RESULT_GAP = 12;
 const SETTLE_TIME = 2200;
+const CONFETTI_DELAY = 380;
+const CONFETTI = {
+    particleCount: 120,
+    spread: 80,
+    startVelocity: 42,
+    origin: { y: 0.38 },
+    shapes: ['square'],
+    flat: true,
+    scalar: 1.5,
+    ticks: 170,
+    colors: ['#FFD447', '#7CF0B4', '#FFFFFF', '#FF8A7A', '#A8E6FF'],
+    disableForReducedMotion: true
+};
 
 const laneStatus = ({ progress, hasError, isDone }, struck, isMoving) => {
     if (isDone && hasError) return 'out';
@@ -401,8 +415,12 @@ function App() {
         grow.onfinish = grow.oncancel = () => { surface.style.overflow = ''; };
         setIsSettling(true);
         const timer = setTimeout(() => setIsSettling(false), SETTLE_TIME);
-        return () => clearTimeout(timer);
-    }, [isFinished]);
+        const burst = hasWon ? setTimeout(() => confetti(CONFETTI), CONFETTI_DELAY) : null;
+        return () => {
+            clearTimeout(timer);
+            clearTimeout(burst);
+        };
+    }, [isFinished, hasWon]);
 
     return (
         <div
