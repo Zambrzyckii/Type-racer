@@ -10,7 +10,7 @@ export const useGameLogic = () => {
   const [session, setSession] = useState({ isAuth: false, username: "" });
   const [room, setRoom] = useState({ code: "", isJoined: false, players: [], chat: [], opponents: {}, host: "", joinError: "", settings: { powerUpsEnabled: false, hardMode: false, secondsToEnd: 0 } });
   const [game, setGame] = useState({ status: "lobby", text: "Loading...", countdown: 0, winner: "", leaderboard: [], timeRemaining: null });
-  const [player, setPlayer] = useState({ input: "", progress: 0, wpm: 0, hasError: false, totalKeys: 0, wrongKeys: 0, powerUp: null, debuff: null, buff: null });
+  const [player, setPlayer] = useState({ input: "", progress: 0, wpm: 0, hasError: false, totalKeys: 0, wrongKeys: 0, powerUp: null, swaps: 0, blocked: 0, debuff: null, buff: null });
 
   const powerUpProgress = useMemo(() => {
     if (player.powerUp) return 100;
@@ -87,16 +87,16 @@ export const useGameLogic = () => {
       UpdatePlayersList: (d) => setRoom(r => ({ ...r, players: d.players || d.Players || [], host: d.host || d.Host || "" })),
       BackToLobby: () => {
         setGame(g => ({ ...g, status: "lobby", countdown: 0, winner: "", text: "Loading...", timeRemaining: null }));
-        setPlayer({ input: "", progress: 0, wpm: 0, hasError: false, totalKeys: 0, wrongKeys: 0, powerUp: null, debuff: null, buff: null });
+        setPlayer({ input: "", progress: 0, wpm: 0, hasError: false, totalKeys: 0, wrongKeys: 0, powerUp: null, swaps: 0, blocked: 0, debuff: null, buff: null });
         setRoom(r => ({ ...r, opponents: {} }));
       },
       GameOver: (w) => setGame(g => ({ ...g, winner: w, status: "finished" })),
-      PowerUpGranted: (p) => setPlayer(pl => ({ ...pl, powerUp: p })),
+      PowerUpGranted: (p) => setPlayer(pl => ({ ...pl, powerUp: p, swaps: pl.powerUp ? pl.swaps + 1 : 0 })),
       SetUpLobby: (s) => setRoom(r => ({ ...r, settings: { powerUpsEnabled: s.powerUpsEnabled ?? s.PowerUpsEnabled, hardMode: s.hardMode ?? s.HardMode, secondsToEnd: s.secondsToEnd ?? s.SecondsToEnd } })),
       SettingsUpdate: (s) => setRoom(r => ({ ...r, settings: { powerUpsEnabled: s.powerUpsEnabled ?? s.PowerUpsEnabled, hardMode: s.hardMode ?? s.HardMode, secondsToEnd: s.secondsToEnd ?? s.SecondsToEnd } })),
       ReceiveAttack: (t, pwr) => {
         setPlayer(pl => {
-        	if (pl.buff === "shield") return { ...pl, buff:null };
+        	if (pl.buff === "shield") return { ...pl, buff:null, blocked: pl.blocked + 1 };
         	return pwr === "bomb" 
         	? { ...pl, input: pl.input.substring(0, Math.max(0,pl.input.length - 10)), debuff: "bomb"} : 
         	{ ...pl, debuff: pwr}; });
@@ -107,7 +107,7 @@ export const useGameLogic = () => {
       ReceiveChatMessage: (s, txt) => setRoom(r => ({ ...r, chat: [...r.chat, { text: txt, sender: s, type: s === localStorage.getItem("username") ? "sent" : "received" }] })),
       LoadText: (txt) => {
         setGame(g => ({ ...g, text: txt, countdown: 3, status: "countdown", winner: "" }));
-        setPlayer({ input: "", progress: 0, wpm: 0, hasError: false, totalKeys: 0, wrongKeys: 0, powerUp: null, debuff: null, buff: null });
+        setPlayer({ input: "", progress: 0, wpm: 0, hasError: false, totalKeys: 0, wrongKeys: 0, powerUp: null, swaps: 0, blocked: 0, debuff: null, buff: null });
         setRoom(r => ({ ...r, opponents: {} }));
       }
     };

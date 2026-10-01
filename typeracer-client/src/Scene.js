@@ -97,6 +97,7 @@ function Scene() {
       {PROPS.map((layer, index) => (
         <Layer key={index} {...layer} />
       ))}
+      <div className="sk-cold" />
     </div>
   );
 }

@@ -93,6 +93,19 @@
     alternate;
 }
 
+/* Freeze: the world goes cold */
+.sk-cold {
+  position: absolute;
+  inset: 0;
+  background: #2a6fc9;
+  mix-blend-mode: color;
+  opacity: 0;
+  transition: opacity 600ms;
+}
+.tr-root[data-debuff="freeze"] .sk-cold {
+  opacity: 0.55;
+}
+
 @keyframes amb-drift {
   to {
     transform: translateX(calc(var(--px) * var(--w) * -1));

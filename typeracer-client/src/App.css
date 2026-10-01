@@ -1506,6 +1506,132 @@ body {
 .tr-board tr[data-self="1"] td:first-child {
   box-shadow: inset 3px 0 0 var(--sk-sun);
 }
+
+/* Effects. Freeze: frost grows from the corners of the typing group and the world goes cold. */
+.tr-typing::before,
+.tr-typing::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  width: calc(var(--px) * 18);
+  height: calc(var(--px) * 18);
+  background: url(./assets/scene/frost.png) 0 0 / 100% 100% no-repeat;
+  image-rendering: pixelated;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 500ms;
+}
+.tr-typing::before {
+  left: calc(var(--px) * -5);
+  top: calc(var(--px) * -5);
+}
+.tr-typing::after {
+  right: calc(var(--px) * -5);
+  bottom: calc(var(--px) * -5);
+  transform: rotate(180deg);
+}
+.tr-root[data-debuff="freeze"] .tr-typing::before,
+.tr-root[data-debuff="freeze"] .tr-typing::after {
+  opacity: 1;
+  animation: fx-frost 600ms var(--e-out) both;
+}
+.tr-root[data-debuff="freeze"] .tr-quote {
+  border-color: var(--sk-ice);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35),
+    inset 0 0 40px rgba(168, 230, 255, 0.28);
+}
+.tr-root[data-debuff="freeze"] .tr-c {
+  color: #cfefff;
+}
+/* Snow falls inside the screen, behind the letters and dim enough to leave them readable */
+.sk-snow {
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  width: calc(var(--px) * 5);
+  height: calc(var(--px) * 5);
+  background: url(./assets/scene/snow.png) 0 0 / 100% 100% no-repeat;
+  image-rendering: pixelated;
+  opacity: 0.24;
+  pointer-events: none;
+  animation: fx-snow 2.6s linear both;
+}
+/* Flashbang: one white flash that fades */
+.tr-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+.tr-root[data-debuff="flashbang"] .tr-overlay {
+  background: #fff;
+  animation: fx-flash 3s ease-out both;
+}
+/* Bomb: a pixel explosion at the caret and one short shake */
+.tr-root[data-debuff="bomb"] .tr-app {
+  animation: fx-shake 420ms linear both;
+}
+.sk-boom {
+  position: absolute;
+  z-index: 3;
+  left: var(--caret-x, 0);
+  top: var(--caret-y, 0);
+  width: calc(var(--px) * 20);
+  height: calc(var(--px) * 20);
+  margin: calc(var(--px) * -7) 0 0 calc(var(--px) * -10);
+  background: url(./assets/scene/boom.png) 0 0 / 600% 100% no-repeat;
+  image-rendering: pixelated;
+  pointer-events: none;
+  animation: fx-boom 540ms steps(6) both;
+}
+/* Chaos: letters come loose and bob out of line */
+.tr-root[data-debuff="chaos"] .tr-quote {
+  border-color: var(--sk-lilac);
+}
+.tr-root[data-debuff="chaos"] .tr-c {
+  position: relative;
+  animation: fx-wobble 300ms ease-in-out infinite alternate;
+}
+.tr-root[data-debuff="chaos"] .tr-c:nth-child(3n) {
+  animation-delay: -200ms;
+  animation-direction: alternate-reverse;
+}
+.tr-root[data-debuff="chaos"] .tr-c:nth-child(3n + 1) {
+  animation-delay: -400ms;
+}
+.tr-root[data-debuff="chaos"] .tr-c:nth-child(4n) {
+  --sk-k: -1;
+}
+.tr-root[data-debuff="chaos"] .tr-c:nth-child(5n + 2) {
+  --sk-k: 0.4;
+  color: var(--sk-lilac);
+}
+/* Shield blocked an attack: a ring breaks away from the input */
+.sk-ring {
+  position: absolute;
+  z-index: 3;
+  inset: auto 0 0 0;
+  height: 58px;
+  border: 3px solid var(--sk-sun);
+  border-radius: 14px;
+  pointer-events: none;
+  animation: fx-ring 520ms var(--e-out) both;
+}
+/* The chip pops in for the first power-up; when it is swapped, only its icon flips */
+.tr-powerup[data-sk-grant="first"] [data-el="pu-ready"] {
+  animation: fx-pop 380ms var(--e-out) both;
+}
+.tr-powerup[data-sk-grant="swap"] [data-el="pu-ready"] .tr-icon {
+  animation: fx-flip 220ms var(--e-out) both;
+}
+/* Every tick of the countdown lands with one push toward the player; the two names restart it */
+.tr-status[data-sk-tick] [data-el="count"],
+.tr-status[data-sk-tick] [data-el="go"] {
+  animation: fx-tick 380ms var(--e-out) both;
+}
+.tr-status[data-sk-tick="b"] [data-el="count"] {
+  animation-name: fx-tick-b;
+}
 @keyframes fx-fade-in {
   from {
     opacity: 0;
@@ -1518,6 +1644,118 @@ body {
   }
   60% {
     transform: translateX(4px);
+  }
+}
+@keyframes fx-frost {
+  from {
+    clip-path: inset(0 100% 100% 0);
+  }
+  to {
+    clip-path: inset(0);
+  }
+}
+@keyframes fx-snow {
+  from {
+    transform: translateY(calc(var(--px) * -6));
+  }
+  to {
+    transform: translateY(calc(var(--px) * 40)) translateX(calc(var(--px) * 5));
+  }
+}
+@keyframes fx-flash {
+  0% {
+    opacity: 0;
+  }
+  2% {
+    opacity: 0.97;
+  }
+  9% {
+    opacity: 0.97;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes fx-shake {
+  0% {
+    transform: translate(0, 0);
+  }
+  15% {
+    transform: translate(-8px, 4px);
+  }
+  30% {
+    transform: translate(8px, -4px);
+  }
+  45% {
+    transform: translate(-4px, -4px);
+  }
+  60% {
+    transform: translate(4px, 4px);
+  }
+  75% {
+    transform: translate(-4px, 0);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+@keyframes fx-boom {
+  from {
+    background-position-x: 0;
+  }
+  to {
+    background-position-x: calc(var(--px) * -120);
+  }
+}
+@keyframes fx-wobble {
+  from {
+    top: calc(5px * var(--sk-k, 1));
+  }
+  to {
+    top: calc(-5px * var(--sk-k, 1));
+  }
+}
+@keyframes fx-ring {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.06, 1.7);
+  }
+}
+@keyframes fx-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes fx-flip {
+  0% {
+    transform: rotateX(90deg);
+  }
+  100% {
+    transform: rotateX(0);
+  }
+}
+@keyframes fx-tick {
+  from {
+    opacity: 0.25;
+    transform: scale(1.5);
+  }
+}
+@keyframes fx-tick-b {
+  from {
+    opacity: 0.25;
+    transform: scale(1.5);
   }
 }
 @keyframes fx-hit {

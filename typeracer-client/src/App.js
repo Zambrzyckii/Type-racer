@@ -5,6 +5,8 @@ import Icon from './Icon';
 import { useGameLogic } from './GameLogic';
 import './App.css';
 
+const SNOWFLAKES = [9, 81, 34, 58, 22, 70, 46, 90];
+
 const laneStatus = ({ progress }, isMoving) => {
     if (progress >= 100) return 'done';
     return isMoving ? 'run' : 'idle';
@@ -239,7 +241,7 @@ function App() {
         </div>
 
         {!isFinished && (
-            <div className="tr-status">
+            <div className="tr-status" data-sk-tick={game.countdown % 2 ? 'a' : 'b'}>
                 {phase === 'count' && <div data-el="count">{game.countdown}</div>}
                 {phase === 'go' && <div data-el="go">START!</div>}
                 {phase === 'overtime' && <div data-el="timer">Time to end: <b>{game.timeRemaining}</b>s</div>}
@@ -259,6 +261,10 @@ function App() {
         <div className="tr-typing">
             <Quote position={player.input.length} showCaret={isRacing && phase !== 'finishing'}>
                 {actions.renderHighlightedText()}
+                {player.debuff === 'freeze' && SNOWFLAKES.map((left, index) => (
+                    <i key={index} className="sk-snow" aria-hidden="true" style={{ left: `${left}%`, animationDelay: `${index * 230}ms` }} />
+                ))}
+                {player.debuff === 'bomb' && <i className="sk-boom" aria-hidden="true" />}
             </Quote>
 
             <div className="tr-banners" aria-live="polite">
@@ -298,16 +304,18 @@ function App() {
                 }}
                 autoFocus={game.status === 'racing'}
             />
+            {player.blocked > 0 && <i key={player.blocked} className="sk-ring" aria-hidden="true" />}
         </div>
 
         {!isFinished && room.settings.powerUpsEnabled && (
             <div
                 className="tr-powerup"
+                data-sk-grant={player.swaps > 0 ? 'swap' : 'first'}
                 style={{ '--c': (computed.powerUpProgress || 0) / 100 }}
             >
                 <div className="tr-bar"><div className="tr-bar-fill" /></div>
                 {player.powerUp && (
-                    <div data-el="pu-ready">
+                    <div key={player.swaps} data-el="pu-ready">
                         <Icon name={player.powerUp} />
                         <span>Power-up ready: <b>{player.powerUp}</b> <span className="tr-key">(Press CTRL)</span></span>
                     </div>
@@ -367,7 +375,7 @@ function App() {
             data-err={player.hasError ? '1' : '0'}
         >
             <Scene />
-            <div className={`tr-app ${player.debuff === 'flashbang' ? 'flashbang-active' : ''} ${player.debuff === 'bomb' ? 'bomb-active' : ''}`}>
+            <div className="tr-app">
                 <header className="tr-header">
                     <h1 className="tr-title">TypeRacer</h1>
                     {session.isAuth && (
@@ -396,6 +404,7 @@ function App() {
                     </section>
                 </main>
             </div>
+            <div className="tr-overlay" aria-hidden="true" />
         </div>
     );
 }
