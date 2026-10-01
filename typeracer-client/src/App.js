@@ -29,6 +29,7 @@ function App() {
         : player.input.length === 0 ? 'go'
         : game.timeRemaining > 0 ? 'overtime'
         : 'typing';
+    const isHost = session.username === room.host;
 
     const body = !session.isAuth ? (
         <Auth onLoginSuccess={(username) => {
@@ -57,102 +58,103 @@ function App() {
             </button>
         </div>
     ) : game.status === 'lobby' ? (
-        <div className="glass-panel" style={{ textAlign: 'center' }}>
-            <h2 className="subtitle" style={{ fontSize: '28px' }}>
-                Room: <span style={{ color: 'var(--cyan)', letterSpacing: '4px' }}>{room.code}</span>
-            </h2>
-            <p style={{ color: 'rgba(255,255,255,0.4)', marginBottom: '30px', animation: 'pulse 2s infinite' }}>Waiting for the race to start...</p>
+        <div className="tr-panel">
+            <h2>Room: <span data-el="room">{room.code}</span></h2>
+            <p data-el="waiting">Waiting for the race to start...</p>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '20px', marginBottom: '30px', flexWrap: 'wrap' }}>
-
-                <div className="glass-panel-sm" style={{ flex: '1 1 300px', textAlign: 'left' }}>
-                    <h3 style={{ color: 'var(--green)', marginTop: 0, borderBottom: '1px solid var(--border)', paddingBottom: '10px', fontSize: '14px', letterSpacing: '2px', textTransform: 'uppercase' }}>
-                        Players ({room.players.length})
-                    </h3>
-                    <ul style={{ listStyleType: 'none', padding: 0, margin: 0, maxHeight: '150px', overflowY: 'auto' }}>
+            <div className="tr-lobby-grid">
+                <div className="tr-card">
+                    <h3>{`Players (${room.players.length})`}</h3>
+                    <ul className="tr-players">
                         {room.players.length > 0 ? (
                             room.players.map((p, index) => (
-                                <li key={index} style={{ padding: '10px 0', borderBottom: '1px solid var(--border)', color: p === room.host ? 'var(--orange)' : 'rgba(255,255,255,0.8)', fontSize: '16px', display: 'flex', alignItems: 'center', fontFamily: 'var(--mono)' }}>
-                                    <span style={{ marginRight: '10px', fontSize: '12px', opacity: 0.8, color: p === room.host ? 'var(--orange)' : 'var(--cyan)' }}>
-                                        {p === room.host ? '[HOST]' : '[PILOT]'}
+                                <li
+                                    key={index}
+                                    className="tr-player"
+                                    data-role={p === room.host ? 'host' : 'guest'}
+                                    data-self={p === session.username ? '1' : '0'}
+                                >
+                                    <span className="tr-tag">
+                                        <Icon name={p === room.host ? 'host' : 'guest'} />
+                                        <span>{p === room.host ? '[HOST]' : '[PILOT]'}</span>
                                     </span>
-                                    {p.length > 15 ? p.substring(0,15) + "..." : p}
+                                    <span className="tr-name" title={p}>
+                                        {p.length > 15 ? p.substring(0,15) + "..." : p}
+                                    </span>
                                 </li>
                             ))
                         ) : (
-                            <li style={{ color: 'rgba(255,255,255,0.3)', padding: '10px', fontStyle: 'italic' }}>You are alone...</li>
+                            <li data-el="alone">You are alone...</li>
                         )}
                     </ul>
                 </div>
 
-                <div className="glass-panel-sm" style={{ flex: '1 1 300px', textAlign: 'left' }}>
-                    <h3 style={{ color: 'var(--cyan)', marginTop: 0, borderBottom: '1px solid var(--border)', paddingBottom: '10px', fontSize: '14px', letterSpacing: '2px', textTransform: 'uppercase' }}>
-                        Room Settings
-                    </h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'rgba(255,255,255,0.8)' }}>
+                <div className="tr-card">
+                    <h3>Room Settings</h3>
+                    <div className="tr-rows">
+                        <div className="tr-row">
                             <span>Power-Ups:</span>
-                            <label className="toggle-switch">
-                                <input 
-                                    type="checkbox" 
-                                    checked={room.settings?.powerUpsEnabled || false} 
-                                    disabled={session.username !== room.host}
+                            <label className="tr-toggle">
+                                <input
+                                    type="checkbox"
+                                    aria-label="Power-ups"
+                                    checked={room.settings?.powerUpsEnabled || false}
+                                    disabled={!isHost}
                                     onChange={(e) => actions.handleChangeSettings(e.target.checked, room.settings.hardMode, room.settings.secondsToEnd)}
                                 />
-                                <span className="slider"></span>
+                                <span className="tr-toggle-ui"></span>
                             </label>
                         </div>
 
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'rgba(255,255,255,0.8)' }}>
+                        <div className="tr-row">
                             <span>Hard Mode:</span>
-                            <label className="toggle-switch">
-                                <input 
-                                    type="checkbox" 
-                                    checked={room.settings?.hardMode || false} 
-                                    disabled={session.username !== room.host}
+                            <label className="tr-toggle">
+                                <input
+                                    type="checkbox"
+                                    aria-label="Hard mode"
+                                    checked={room.settings?.hardMode || false}
+                                    disabled={!isHost}
                                     onChange={(e) => actions.handleChangeSettings(room.settings.powerUpsEnabled, e.target.checked, room.settings.secondsToEnd)}
                                 />
-                                <span className="slider"></span>
+                                <span className="tr-toggle-ui"></span>
                             </label>
                         </div>
 
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'rgba(255,255,255,0.8)' }}>
+                        <div className="tr-row">
                             <span>Time Limit (s):</span>
-                            <div className="time-control-wrapper">
-                                <button 
-                                    className="cyber-arrow-btn"
-                                    disabled={session.username !== room.host}
+                            <div className="tr-stepper">
+                                <button
+                                    aria-label="Decrease time limit"
+                                    disabled={!isHost}
                                     onClick={() => actions.handleChangeSettings(room.settings.powerUpsEnabled, room.settings.hardMode, Math.max(0, (room.settings?.secondsToEnd || 0) - 10))}
                                 >
                                     -
                                 </button>
-                                <input 
+                                <input
                                     type="number"
-                                    className="cyber-input"
+                                    className="tr-input"
+                                    aria-label="Time limit in seconds"
                                     min="0" max="300"
-                                    value={room.settings?.secondsToEnd || 0} 
-                                    disabled={session.username !== room.host}
+                                    value={room.settings?.secondsToEnd || 0}
+                                    disabled={!isHost}
                                     onChange={(e) => actions.handleChangeSettings(room.settings.powerUpsEnabled, room.settings.hardMode, Number(e.target.value) || 0)}
-                                    style={{ width: '60px', padding: '8px', textAlign: 'center' }}
                                 />
-                                <button 
-                                    className="cyber-arrow-btn"
-                                    disabled={session.username !== room.host}
+                                <button
+                                    aria-label="Increase time limit"
+                                    disabled={!isHost}
                                     onClick={() => actions.handleChangeSettings(room.settings.powerUpsEnabled, room.settings.hardMode, (room.settings?.secondsToEnd || 0) + 10)}
                                 >
                                     +
                                 </button>
                             </div>
                         </div>
-
                     </div>
                 </div>
             </div>
 
-            {session.username === room.host && (
-                <button className="btn-start-massive" onClick={actions.handleStart}>
-                    START RACE
+            {isHost && (
+                <button className="tr-btn" data-v="start" onClick={actions.handleStart}>
+                    Start race
                 </button>
             )}
         </div>
