@@ -177,6 +177,10 @@ export const useGameLogic = () => {
       const joined = room.code.trim() && (await invoke("JoinRoom", room.code));
       setRoom(r => ({ ...r, isJoined: !!joined, joinError: joined ? "" : "Game already started" }));
     },
+    handleLeaveRoom: async () => {
+      await invoke("LeaveRoom");
+      setRoom(r => ({ ...r, code: "", isJoined: false, players: [], opponents: {}, struck: {}, host: "", joinError: "" }));
+    },
     handleStart: () => invoke("StartRoomGame", room.code),
     handleChangeSettings: (p, h, s) => session.username === room.host && invoke("ChangeRoomSettings", room.code, p, h, s),
     renderHighlightedText: () => {

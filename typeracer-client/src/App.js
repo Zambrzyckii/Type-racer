@@ -222,6 +222,10 @@ function App() {
                     Start race
                 </button>
             )}
+            <button className="tr-btn" data-action="leave" onClick={actions.handleLeaveRoom}>
+                <Icon name="logout" />
+                Leave room
+            </button>
         </div>
     ) : (
     <>
