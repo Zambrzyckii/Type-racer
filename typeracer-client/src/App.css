@@ -1248,6 +1248,42 @@ body {
   color: var(--sk-sun);
 }
 
+/* Result */
+.tr-result {
+  margin: 0 0 12px;
+  padding: 22px;
+  text-align: center;
+}
+.tr-result h2 {
+  margin: -12px 0 0;
+  font: 400 80px/1 var(--sk-f-pixel);
+  font-synthesis: none;
+  letter-spacing: 0;
+}
+.tr-result[data-outcome="win"] {
+  border-color: rgba(124, 240, 180, 0.6);
+}
+.tr-result[data-outcome="win"] h2 {
+  color: var(--sk-mint);
+}
+.tr-result[data-outcome="lose"] h2 {
+  margin-top: -6px;
+  font-size: 60px;
+  color: #fff;
+}
+.tr-avg {
+  font-size: 16px;
+  color: var(--c-text-dim);
+}
+.tr-avg b {
+  font-family: var(--f-mono);
+  color: #fff;
+}
+.tr-sep {
+  margin: 0 6px;
+  opacity: 0.5;
+}
+
 /* The typing group reads as the laptop's screen */
 .tr-typing {
   position: relative;
@@ -1414,6 +1450,62 @@ body {
   border-radius: 5px;
   box-shadow: 0 2px 0 rgba(8, 36, 64, 0.55);
 }
+
+/* After the race */
+.tr-again {
+  min-height: 30px;
+  margin-top: 18px;
+  text-align: center;
+}
+.tr-again .tr-btn {
+  width: auto;
+}
+.tr-board {
+  margin-top: 22px;
+  padding: 20px 22px;
+  overflow-x: auto;
+}
+.tr-board h2 {
+  margin-bottom: 8px;
+  font: 600 17px/1 var(--f-body);
+  text-align: center;
+  color: #fff;
+}
+.tr-board table {
+  width: 100%;
+  font: 15px/1.2 var(--f-mono);
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+  border-collapse: collapse;
+}
+.tr-board th {
+  padding: 12px;
+  font: 700 11px/1 var(--f-body);
+  letter-spacing: 0.12em;
+  color: var(--c-text-dim);
+  border-bottom: var(--bw) solid var(--c-border);
+}
+.tr-board td {
+  padding: 10px 12px;
+  font-size: 14px;
+  border-bottom: var(--bw) solid rgba(255, 255, 255, 0.09);
+}
+.tr-board td:nth-child(5) {
+  font-weight: 700;
+}
+.tr-board tr[data-rank="1"] td:first-child {
+  font-weight: 700;
+  color: var(--sk-sun);
+}
+.tr-board tr[data-self="1"] td {
+  background: rgba(255, 212, 71, 0.14);
+}
+.tr-board tr[data-self="1"] td:nth-child(2) {
+  font-weight: 700;
+}
+.tr-board tr[data-self="1"] td:first-child {
+  box-shadow: inset 3px 0 0 var(--sk-sun);
+}
 @keyframes fx-fade-in {
   from {
     opacity: 0;
@@ -1483,6 +1575,12 @@ body {
   }
   .tr-status [data-el="go"] {
     font-size: 60px;
+  }
+  .tr-result h2 {
+    font-size: 60px;
+  }
+  .tr-result[data-outcome="lose"] h2 {
+    font-size: 40px;
   }
   .tr-powerup {
     flex-direction: column;

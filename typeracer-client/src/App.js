@@ -64,6 +64,7 @@ function App() {
     const isHost = session.username === room.host;
     const isRacing = game.status === 'racing';
     const isFinished = game.status === 'finished';
+    const hasWon = game.winner === session.username;
     const opponents = room.players.filter(p => p !== session.username);
 
     const body = !session.isAuth ? (
@@ -246,13 +247,11 @@ function App() {
             </div>
         )}
 
-        {game.status === 'finished' && (
-            <div className="glass-panel" style={{ textAlign: 'center', padding: '30px', borderColor: game.winner === session.username ? 'var(--green)' : 'var(--orange)' }}>
-                <h2 style={{ color: game.winner === session.username ? 'var(--green)' : 'var(--orange)', margin: '0 0 15px 0', fontSize: '32px', fontFamily: 'var(--mono)', textShadow: game.winner === session.username ? 'var(--green-glow)' : 'var(--orange-glow)' }}>
-                    {game.winner === session.username ? "VICTORY!" : `WINNER: ${game.winner}`}
-                </h2>
-                <div style={{ fontSize: '18px', color: 'rgba(255,255,255,0.7)', fontFamily: 'var(--ui)' }}>
-                    Average: <span style={{color: 'var(--cyan)', fontWeight: 'bold'}}>{player.wpm} WPM</span> &nbsp;|&nbsp; Accuracy: <span style={{color: 'var(--orange)', fontWeight: 'bold'}}>{computed.accuracy}%</span>
+        {isFinished && (
+            <div className="tr-panel tr-result" data-outcome={hasWon ? 'win' : 'lose'}>
+                <h2>{hasWon ? "VICTORY!" : `WINNER: ${game.winner}`}</h2>
+                <div className="tr-avg">
+                    Average: <b>{`${player.wpm} WPM`}</b> <span className="tr-sep">|</span> Accuracy: <b>{`${computed.accuracy}%`}</b>
                 </div>
             </div>
         )}
@@ -316,39 +315,37 @@ function App() {
             </div>
         )}
 
-        {game.status === 'finished' && (
+        {isFinished && (
             <>
-                <div style={{ marginTop: '30px', textAlign: 'center' }}>
-                    {session.username === room.host && (
-                        <button className="btn-start-massive" onClick={actions.handleRestart} style={{ padding: '15px 40px', width: 'auto' }}>
-                            PLAY AGAIN
+                <div className="tr-again">
+                    {isHost && (
+                        <button className="tr-btn" data-v="start" onClick={actions.handleRestart}>
+                            Play again
                         </button>
                     )}
                 </div>
 
                 {game.leaderboard.length > 0 && (
-                    <div className="glass-panel" style={{ marginTop: '50px' }}>
-                        <h2 className="subtitle" style={{ textAlign: 'center', marginBottom: '20px', color: 'rgba(255,255,255,0.5)', fontSize: '18px' }}>GLOBAL LEADERBOARD (TOP 10)</h2>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', color: 'rgba(255,255,255,0.8)', textAlign: 'left', fontSize: '15px', fontFamily: 'var(--mono)' }}>
+                    <div className="tr-panel tr-board">
+                        <h2>Global leaderboard (top 10)</h2>
+                        <table>
                             <thead>
-                                <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                                    <th style={{ padding: '15px 12px', color: 'rgba(255,255,255,0.4)', fontFamily: 'var(--ui)', letterSpacing: '1px' }}>#</th>
-                                    <th style={{ padding: '15px 12px', color: 'rgba(255,255,255,0.4)', fontFamily: 'var(--ui)', letterSpacing: '1px' }}>NICKNAME</th>
-                                    <th style={{ padding: '15px 12px', color: 'rgba(255,255,255,0.4)', fontFamily: 'var(--ui)', letterSpacing: '1px' }}>PLAYED</th>
-                                    <th style={{ padding: '15px 12px', color: 'rgba(255,255,255,0.4)', fontFamily: 'var(--ui)', letterSpacing: '1px' }}>WIN RATE</th>
-                                    <th style={{ padding: '15px 12px', color: 'rgba(255,255,255,0.4)', fontFamily: 'var(--ui)', letterSpacing: '1px' }}>BEST WPM</th>
+                                <tr>
+                                    <th>#</th>
+                                    <th>NICKNAME</th>
+                                    <th>PLAYED</th>
+                                    <th>WIN RATE</th>
+                                    <th>BEST WPM</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {game.leaderboard.map((p, index) => (
-                                    <tr key={index} style={{ borderBottom: '1px solid var(--border)', backgroundColor: index % 2 === 0 ? 'var(--surface-sm)' : 'transparent' }}>
-                                        <td style={{ padding: '12px', color: 'rgba(255,255,255,0.3)' }}>{index + 1}</td>
-                                        <td style={{ padding: '12px', fontWeight: p.username === session.username ? 'bold' : 'normal', color: p.username === session.username ? 'var(--cyan)' : 'rgba(255,255,255,0.8)' }}>
-                                            {p.username}
-                                        </td>
-                                        <td style={{ padding: '12px', color: 'rgba(255,255,255,0.5)' }}>{p.gamesPlayed}</td>
-                                        <td style={{ padding: '12px', color: 'var(--orange)' }}>{p.winrate}%</td>
-                                        <td style={{ padding: '12px', color: 'var(--green)', fontWeight: 'bold' }}>{p.highScoreWpm}</td>
+                                    <tr key={index} data-rank={index + 1} data-self={p.username === session.username ? '1' : '0'}>
+                                        <td>{index + 1}</td>
+                                        <td>{p.username}</td>
+                                        <td>{p.gamesPlayed}</td>
+                                        <td>{`${p.winrate}%`}</td>
+                                        <td>{p.highScoreWpm}</td>
                                     </tr>
                                 ))}
                             </tbody>
