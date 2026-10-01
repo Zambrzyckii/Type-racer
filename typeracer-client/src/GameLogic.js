@@ -5,7 +5,7 @@ export const useGameLogic = () => {
   const [connection, setConnection] = useState(null);
   const inputRef = useRef(null);
   const [session, setSession] = useState({ isAuth: false, username: "" });
-  const [room, setRoom] = useState({ code: "", isJoined: false, players: [], chat: [], opponents: {}, host: "", settings: { powerUpsEnabled: false, hardMode: false, secondsToEnd: 0 } });
+  const [room, setRoom] = useState({ code: "", isJoined: false, players: [], chat: [], opponents: {}, host: "", joinError: "", settings: { powerUpsEnabled: false, hardMode: false, secondsToEnd: 0 } });
   const [game, setGame] = useState({ status: "lobby", text: "Loading...", countdown: 0, winner: "", leaderboard: [], timeRemaining: null });
   const [player, setPlayer] = useState({ input: "", progress: 0, wpm: 0, hasError: false, totalKeys: 0, wrongKeys: 0, powerUp: null, debuff: null, buff: null });
 
@@ -117,7 +117,7 @@ export const useGameLogic = () => {
   const actions = {
     setIsAuthenticated: v => setSession(s => ({ ...s, isAuth: v })),
     setCurrentPlayer: v => setSession(s => ({ ...s, username: v })),
-    setRoomCode: v => setRoom(r => ({ ...r, code: v })),
+    setRoomCode: v => setRoom(r => ({ ...r, code: v, joinError: "" })),
     handleInputChange: (e) => {
       if (game.status !== "racing" || player.debuff === "freeze") return;
       const t = e.target.value;
@@ -134,7 +134,10 @@ export const useGameLogic = () => {
     handleUsePowerUp: (t) => { invoke("UsePowerUp", room.code, session.username, t, player.powerUp); setPlayer(p => ({ ...p, powerUp: null })); },
     handleRestart: () => invoke("RestartGame"),
     sendChatMessage: m => invoke("SendChatMessage", room.code, session.username, m),
-    handleJoinRooms: async () => room.code.trim() && (await invoke("JoinRoom", room.code)) ? setRoom(r => ({ ...r, isJoined: true })) : alert("Game already started"),
+    handleJoinRooms: async () => {
+      const joined = room.code.trim() && (await invoke("JoinRoom", room.code));
+      setRoom(r => ({ ...r, isJoined: !!joined, joinError: joined ? "" : "Game already started" }));
+    },
     handleStart: () => invoke("StartRoomGame", room.code),
     handleChangeSettings: (p, h, s) => session.username === room.host && invoke("ChangeRoomSettings", room.code, p, h, s),
     renderHighlightedText: () => {

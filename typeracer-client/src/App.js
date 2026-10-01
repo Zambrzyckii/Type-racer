@@ -49,6 +49,9 @@ function App() {
                 autoComplete="off"
                 spellCheck={false}
             />
+            {room.joinError && (
+                <p className="tr-msg" data-tone="error" role="alert">{room.joinError}</p>
+            )}
             <button className="tr-btn" data-v="primary" data-action="join" onClick={actions.handleJoinRooms}>
                 Join game
             </button>
