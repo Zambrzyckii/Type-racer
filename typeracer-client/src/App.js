@@ -31,12 +31,10 @@ function App() {
         : 'typing';
 
     const body = !session.isAuth ? (
-        <div className="glass-panel" style={{ textAlign: 'center', maxWidth: '400px', margin: '60px auto', padding: '40px 30px' }}>
-            <Auth onLoginSuccess={(username) => {
-                actions.setIsAuthenticated(true);
-                actions.setCurrentPlayer(username);
-            }} /> 
-        </div>
+        <Auth onLoginSuccess={(username) => {
+            actions.setIsAuthenticated(true);
+            actions.setCurrentPlayer(username);
+        }} />
     ) : !room.isJoined ? (
         <div className="glass-panel" style={{ textAlign: 'center', maxWidth: '500px', margin: '0 auto' }}>
             <h2 className="subtitle" style={{ color: 'var(--cyan)' }}>Join a Room</h2>
