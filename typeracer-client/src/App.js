@@ -1,6 +1,7 @@
 import React from 'react';
 import Auth from './Auth';
 import { useGameLogic } from './GameLogic';
+import Scene from './Scene';
 import './App.css'; 
 
 function App() {
@@ -22,6 +23,8 @@ function App() {
     }, [player.debuff, game.status, inputRef]);
 
     return (
+        <>
+        <Scene />
         <div className={`game-container ${player.debuff === 'flashbang' ? 'flashbang-active' : ''} ${player.debuff === 'bomb' ? 'bomb-active' : ''}`}>
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
@@ -362,6 +365,7 @@ function App() {
                 </>
             )}
         </div>
+        </>
     );
 }
 

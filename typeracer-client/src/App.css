@@ -28,54 +28,27 @@
 
   --mono: "JetBrains Mono", monospace;
   --ui: "Rajdhani", sans-serif;
+
+  /* scene: --px and --cx are set by useArtScale (Scene.js) */
+  --scene-bg: #1a89e5;
+  --px: 4px;
+  --cx: 50vw;
 }
 
 body {
-  background: var(--bg);
+  background: var(--scene-bg);
   color: rgba(255, 255, 255, 0.88);
   font-family: var(--ui);
   margin: 0;
   padding: 0;
 }
 
-/* Scanline texture & ambient glow */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0, 0, 0, 0.15) 2px,
-    rgba(0, 0, 0, 0.15) 4px
-  );
-  pointer-events: none;
-  z-index: 9999;
-  opacity: 0.3;
-}
 .game-container {
   min-height: 100vh;
   padding: 40px;
   position: relative;
   max-width: 1000px;
   margin: 0 auto;
-}
-.game-container::before {
-  content: "";
-  position: absolute;
-  top: -20%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 800px;
-  height: 600px;
-  background: radial-gradient(
-    ellipse,
-    rgba(0, 240, 255, 0.05) 0%,
-    transparent 70%
-  );
-  pointer-events: none;
-  z-index: -1;
 }
 
 /* Typography */

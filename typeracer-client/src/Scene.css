@@ -1,0 +1,75 @@
+/* The pixel-art backdrop. Every size is a multiple of --px, the length of one art pixel,
+   which useArtScale (Scene.js) derives from the window height. */
+
+.tr-scene {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--scene-bg);
+}
+.tr-scene * {
+  image-rendering: pixelated;
+}
+
+/* Layers: --w / --h are the art size, --x / --y the offsets from the anchored edges */
+.tr-layer {
+  position: absolute;
+  width: calc(var(--px) * var(--w));
+  height: calc(var(--px) * var(--h));
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+.tr-layer[data-repeat="x"] {
+  left: 0;
+  right: 0;
+  width: auto;
+  background-repeat: repeat-x;
+  background-size: calc(var(--px) * var(--w)) 100%;
+  background-position-x: calc(var(--cx) + var(--px) * var(--ox, 0));
+}
+.tr-layer[data-anchor^="bottom"] {
+  bottom: calc(var(--px) * var(--y, 0));
+}
+.tr-layer[data-anchor^="top"] {
+  top: calc(var(--px) * var(--y, 0));
+}
+.tr-layer[data-anchor$="-left"] {
+  left: calc(var(--px) * var(--x, 0));
+}
+.tr-layer[data-anchor$="-right"] {
+  right: calc(var(--px) * var(--x, 0));
+}
+.tr-layer[data-anchor$="-center"] {
+  left: calc(var(--cx) + var(--px) * var(--x, 0));
+}
+/* A sprite sheet laid out horizontally: --w is one frame, --n the frame count */
+.tr-layer[data-frames] {
+  background-size: calc(var(--px) * var(--w) * var(--n)) 100%;
+  background-position-x: 0;
+}
+
+.sk-shafts {
+  opacity: 0.42;
+}
+.sk-flag {
+  transform: scaleX(-1);
+}
+.sk-flag i {
+  position: absolute;
+  top: 0;
+}
+.sk-pole {
+  left: var(--px);
+  width: var(--px);
+  height: 100%;
+  background: #7a6a4c;
+}
+.sk-cloth {
+  left: calc(var(--px) * (2 + var(--k)));
+  width: var(--px);
+  height: calc(var(--px) * 6);
+  background: url(./assets/scene/flag.png) calc(var(--px) * (2 + var(--k)) * -1)
+    0 / calc(var(--px) * 14) calc(var(--px) * 14) no-repeat;
+}
