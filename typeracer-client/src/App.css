@@ -28,15 +28,9 @@
 
   --mono: "JetBrains Mono", monospace;
   --ui: "Rajdhani", sans-serif;
-
-  /* scene: --px and --cx are set by useArtScale (Scene.js) */
-  --scene-bg: #1a89e5;
-  --px: 4px;
-  --cx: 50vw;
 }
 
 body {
-  background: var(--scene-bg);
   color: rgba(255, 255, 255, 0.88);
   font-family: var(--ui);
   margin: 0;
@@ -386,6 +380,231 @@ input[type="number"] {
   filter: blur(1px);
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  /* palette */
+  --sk-sun: #ffd447;
+  --sk-mint: #7cf0b4;
+  --sk-coral: #ff8a7a;
+  --sk-ice: #a8e6ff;
+  --sk-lilac: #d2bcff;
+  --sk-ink: #082440;
+  --sk-screen: rgba(6, 22, 40, 0.9);
+  --sk-glass-new: rgba(7, 50, 58, 0.78);
+
+  /* colour roles */
+  --c-text: #ffffff;
+  --c-text-dim: rgba(255, 255, 255, 0.8);
+  --c-surface: rgba(8, 36, 64, 0.76);
+  --c-surface-2: rgba(255, 255, 255, 0.075);
+  --c-field: rgba(255, 255, 255, 0.1);
+  --c-border: rgba(255, 255, 255, 0.16);
+  --c-border-hi: rgba(255, 255, 255, 0.32);
+  --c-primary: #ffffff;
+  --c-on-primary: var(--sk-ink);
+  --c-accent: var(--sk-sun);
+  --c-ok: var(--sk-mint);
+  --c-warn: var(--sk-sun);
+  --c-error: #ffc0b5;
+  --c-focus: var(--sk-sun);
+  --c-host: var(--sk-sun);
+  --c-guest: #b9e4ff;
+  --c-self: var(--sk-sun);
+  --c-opp: #ffffff;
+  --c-freeze: var(--sk-ice);
+  --c-shield: var(--sk-sun);
+
+  /* typing */
+  --c-ch-todo: #ffffff;
+  --c-ch-cur: #ffffff;
+  --c-ch-ok: var(--sk-mint);
+  --c-ch-bad: #2b0b07;
+  --c-ch-bad-bg: var(--sk-coral);
+  --c-caret: var(--sk-sun);
+  --caret-w: 3px;
+
+  /* type */
+  --f-body: "Figtree", system-ui, sans-serif;
+  --f-display: var(--f-body);
+  --f-mono: "JetBrains Mono", ui-monospace, monospace;
+  --f-num: var(--f-mono);
+  --sk-f-pixel: "Jersey 10", "Figtree", sans-serif;
+  --fs-h2: 26px;
+  --fs-h3: 12px;
+  --fs-body: 16px;
+  --fs-small: 13px;
+  --fs-quote: 22px;
+  --lh-quote: 1.7;
+  --fs-stat: 22px;
+  --fs-count: 100px;
+  --ls-caps: 0.12em;
+
+  /* shape */
+  --r-panel: 18px;
+  --r-ctl: 10px;
+  --bw: 1px;
+  --blur: 14px;
+  --shadow-panel: 0 22px 60px rgba(4, 28, 56, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+
+  /* layout */
+  --gap: 16px;
+  --pad-panel: 28px;
+  --pad-app: 26px;
+  --col: 1000px;
+  --col-auth: 400px;
+  --col-join: 500px;
+  --header-h: 58px;
+  --status-h: 64px;
+  --banner-h: 30px;
+
+  /* motion */
+  --t-fast: 120ms;
+  --t-base: 220ms;
+  --e-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --e-inout: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* scene: --px, --cx and --sk-zoom are set by useArtScale (Scene.js) */
+  --scene-bg: #1a89e5;
+  --px: 4px;
+  --cx: 50vw;
+  --sk-u: var(--px);
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+body {
+  background: var(--scene-bg);
+}
+.tr-root {
+  position: relative;
+  min-height: 100vh;
+  color: var(--c-text);
+  font-family: var(--f-body);
+  font-size: var(--fs-body);
+  line-height: 1.4;
+}
+
+/* App shell */
+.tr-app {
+  position: relative;
+  z-index: 1;
+  max-width: var(--col);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: var(--pad-app);
+}
+.tr-header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 15px;
+  min-height: var(--header-h);
+  margin-bottom: 22px;
+}
+/* The page title stays in the document for assistive tech, but nothing is drawn */
+.tr-title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.tr-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 5px 5px 5px 16px;
+  background: rgba(8, 36, 64, 0.78);
+  border: var(--bw) solid var(--c-border);
+  border-radius: 14px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+.tr-username {
+  font: 500 15px/1 var(--f-body);
+}
+.tr-stage {
+  display: grid;
+}
+.tr-screen {
+  grid-area: 1 / 1;
+  min-width: 0;
+}
+
+/* Buttons */
+.tr-btn {
+  display: inline-block;
+  padding: 11px 18px;
+  font: 600 15px/1 var(--f-body);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.13);
+  border: var(--bw) solid rgba(255, 255, 255, 0.26);
+  border-radius: var(--r-ctl);
+  cursor: pointer;
+  transition: transform var(--t-fast) var(--e-out),
+    background-color var(--t-fast), box-shadow var(--t-fast);
+}
+.tr-btn .tr-icon {
+  vertical-align: -3px;
+  margin-right: 7px;
+}
+.tr-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.22);
+  transform: translateY(-1px);
+}
+.tr-btn:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+}
+.tr-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.tr-btn[data-v="danger"] {
+  padding: 9px 14px;
+  font-size: 14px;
+}
+.tr-btn[data-v="danger"]:hover {
+  background: rgba(255, 138, 122, 0.3);
+}
+.tr-icon {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 1.15em;
+  height: 1.15em;
+}
+.tr-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.tr-btn:focus-visible,
+.tr-link:focus-visible,
+.tr-input:focus-visible {
+  outline: 2px solid var(--c-focus);
+  outline-offset: 2px;
+}
+@media (max-width: 640px) {
+  :root {
+    --fs-count: 80px;
+    --header-h: 46px;
+  }
+  .tr-user {
+    padding-left: 10px;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
