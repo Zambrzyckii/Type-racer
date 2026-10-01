@@ -139,6 +139,7 @@ The diagram below traces one hub method, `SendProgress`, through this adapter pa
 |---|---|
 | `JoinRoom` | `JoinRoomService` |
 | `StartRoomGame` | `StartRoomGameService` |
+| `LeaveRoom` | `PerformCleanupService` |
 | `OnDisconnectedAsync` | `PerformCleanupService` |
 | `SendProgress` | `SendProgressService` |
 | `UsePowerUp` | `PowerUpService` |

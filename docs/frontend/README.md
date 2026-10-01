@@ -47,7 +47,7 @@ Styling lives in two stylesheets: [`typeracer-client/src/App.css`](../../typerac
 
 `computed` (via `useMemo`/plain expressions) exposes `accuracy` (from `totalKeys`/`wrongKeys`) and `powerUpProgress` (a 0–100 value driven by consecutive correctly typed characters). `inputRef` is a `useRef` attached to the race text input so the hook can force-focus it.
 
-`actions` exposes exactly these functions: `setIsAuthenticated`, `setCurrentPlayer`, `setRoomCode`, `handleInputChange`, `handleSpecialKeys`, `handleUsePowerUp`, `handleRestart`, `sendChatMessage`, `handleJoinRooms`, `handleStart`, `handleChangeSettings`, `renderHighlightedText`.
+`actions` exposes exactly these functions: `setIsAuthenticated`, `setCurrentPlayer`, `setRoomCode`, `handleInputChange`, `handleSpecialKeys`, `handleUsePowerUp`, `handleRestart`, `sendChatMessage`, `handleJoinRooms`, `handleLeaveRoom`, `handleStart`, `handleChangeSettings`, `renderHighlightedText`.
 
 The following diagram shows how `App.js` consumes the hook, and how the hook talks to the network.
 
@@ -69,7 +69,7 @@ The following diagram shows how `App.js` consumes the hook, and how the hook tal
 
 **JoinRoom** (`session.isAuth && !room.isJoined`): a "Join a Room" panel with an uppercase room-code input and a "Join game" button. A failed join shows "Game already started" under the input (`room.joinError`).
 
-**Lobby** (`game.status === "lobby"`): shows the room code, a players list tagging the host as `[HOST]` and everyone else as `[PILOT]`, a settings panel (Power-Ups toggle, Hard Mode toggle, Time Limit +/- stepper) that is only editable by the host (`session.username === room.host`), and a host-only "Start race" button.
+**Lobby** (`game.status === "lobby"`): shows the room code, a players list tagging the host as `[HOST]` and everyone else as `[PILOT]`, a settings panel (Power-Ups toggle, Hard Mode toggle, Time Limit +/- stepper) that is only editable by the host (`session.username === room.host`), a host-only "Start race" button, and a "Leave room" button that calls `LeaveRoom` and returns the player to the join screen.
 
 **Countdown** (`game.status === "countdown"`, `game.countdown > 0`): a large numeric countdown, followed by a transient "START!" message once it reaches zero.
 
@@ -115,6 +115,7 @@ Methods invoked (`invoke(...)`):
 | Method | Arguments |
 |---|---|
 | `JoinRoom` | `room.code` |
+| `LeaveRoom` | — |
 | `StartRoomGame` | `room.code` |
 | `ChangeRoomSettings` | `room.code`, `powerUpsEnabled`, `hardMode`, `secondsToEnd` |
 | `SendProgress` | current input string |
