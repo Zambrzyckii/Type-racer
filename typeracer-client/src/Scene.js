@@ -29,6 +29,7 @@ const useArtScale = () => {
       const root = document.documentElement;
       root.style.setProperty("--px", `${device / dpr}px`);
       root.style.setProperty("--cx", `${Math.round((root.clientWidth / 2) * dpr) / dpr}px`);
+      root.style.setProperty("--sk-zoom", (device + 1) / device);
     };
     apply();
     window.addEventListener("resize", apply);
@@ -85,18 +86,20 @@ function Scene() {
 
   return (
     <div className="tr-scene" aria-hidden="true">
-      {BACKDROP.map((layer, index) => (
-        <Layer key={index} {...layer} />
-      ))}
-      <div className="tr-layer sk-flag" data-anchor="bottom-center" style={{ "--w": 14, "--h": 14, "--x": -63, "--y": 70 }}>
-        <i className="sk-pole" />
-        {CLOTH_COLUMNS.map((k) => (
-          <i key={k} className="sk-cloth" style={{ "--k": k }} />
+      <div className="sk-cam">
+        {BACKDROP.map((layer, index) => (
+          <Layer key={index} {...layer} />
+        ))}
+        <div className="tr-layer sk-flag" data-anchor="bottom-center" style={{ "--w": 14, "--h": 14, "--x": -63, "--y": 70 }}>
+          <i className="sk-pole" />
+          {CLOTH_COLUMNS.map((k) => (
+            <i key={k} className="sk-cloth" style={{ "--k": k }} />
+          ))}
+        </div>
+        {PROPS.map((layer, index) => (
+          <Layer key={index} {...layer} />
         ))}
       </div>
-      {PROPS.map((layer, index) => (
-        <Layer key={index} {...layer} />
-      ))}
       <div className="sk-cold" />
     </div>
   );

@@ -50,6 +50,24 @@
   background-position-x: 0;
 }
 
+/* Camera: sits down at the laptop for the race, stands back up for the results */
+.sk-cam {
+  position: absolute;
+  inset: 0;
+  transform-origin: 82% 96%;
+  transition: transform 900ms var(--e-inout);
+}
+.tr-root[data-screen="race"]:not([data-phase="finished"]) .sk-cam {
+  transform: scale(var(--sk-zoom, 1.25));
+}
+.sk-laptop {
+  transition: opacity 420ms 300ms;
+}
+.tr-root[data-screen="race"]:not([data-phase="finished"]) .sk-laptop {
+  opacity: 0;
+  transition: opacity 360ms 560ms;
+}
+
 /* Clouds glide from right to left; --ms is the time one art pixel takes */
 .tr-layer.sk-drift {
   right: auto;

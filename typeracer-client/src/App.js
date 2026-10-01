@@ -3,6 +3,7 @@ import Auth from './Auth';
 import Scene from './Scene';
 import Icon from './Icon';
 import { useGameLogic } from './GameLogic';
+import { useSwap } from './Swap';
 import './App.css';
 
 const SNOWFLAKES = [9, 81, 34, 58, 22, 70, 46, 90];
@@ -365,6 +366,8 @@ function App() {
     </>
     );
 
+    const [shown, swapState, onSwapEnd] = useSwap({ id: screen, body }, screen);
+
     return (
         <div
             className="tr-root"
@@ -399,8 +402,8 @@ function App() {
                 </header>
 
                 <main className="tr-stage">
-                    <section className="tr-screen" data-id={screen}>
-                        {body}
+                    <section className="tr-screen" data-id={shown.id} data-state={swapState} onAnimationEnd={onSwapEnd}>
+                        {shown.body}
                     </section>
                 </main>
             </div>

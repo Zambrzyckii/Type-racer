@@ -7,7 +7,11 @@ const BREAK_AFTER = ".(,=>/";
 export const useGameLogic = () => {
   const [connection, setConnection] = useState(null);
   const inputRef = useRef(null);
-  const [session, setSession] = useState({ isAuth: false, username: "" });
+  const [session, setSession] = useState(() => {
+    const t = localStorage.getItem("token"), u = localStorage.getItem("username");
+    const isAuth = !!t && t !== "undefined" && !!u && u !== "undefined";
+    return { isAuth, username: isAuth ? u : "" };
+  });
   const [room, setRoom] = useState({ code: "", isJoined: false, players: [], chat: [], opponents: {}, host: "", joinError: "", settings: { powerUpsEnabled: false, hardMode: false, secondsToEnd: 0 } });
   const [game, setGame] = useState({ status: "lobby", text: "Loading...", countdown: 0, winner: "", leaderboard: [], timeRemaining: null });
   const [player, setPlayer] = useState({ input: "", progress: 0, wpm: 0, hasError: false, totalKeys: 0, wrongKeys: 0, powerUp: null, swaps: 0, blocked: 0, debuff: null, buff: null });
