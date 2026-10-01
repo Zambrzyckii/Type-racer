@@ -746,6 +746,33 @@ body {
 [data-block="auth"][data-mode="register"] :focus-visible {
   outline-color: var(--sk-mint);
 }
+
+/* Login <-> register: one card leaves sideways, the other arrives from the opposite side.
+   Register lives to the right of login, so going back mirrors the move. */
+[data-block="auth"][data-dir="back"] {
+  --sk-dir: -1;
+}
+[data-block="auth"][data-state="leave"] {
+  animation: tr-card-out 170ms var(--e-inout) both;
+  pointer-events: none;
+}
+[data-block="auth"][data-state="enter"] {
+  animation: tr-card-in 360ms var(--e-out) both;
+}
+@keyframes tr-card-out {
+  to {
+    opacity: 0;
+    transform: translateX(calc(var(--sk-dir, 1) * -44px))
+      rotate(calc(var(--sk-dir, 1) * -2.5deg));
+  }
+}
+@keyframes tr-card-in {
+  from {
+    opacity: 0;
+    transform: translateX(calc(var(--sk-dir, 1) * 44px))
+      rotate(calc(var(--sk-dir, 1) * 2.5deg));
+  }
+}
 @media (max-width: 640px) {
   :root {
     --fs-count: 80px;

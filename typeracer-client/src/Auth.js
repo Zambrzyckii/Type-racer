@@ -1,10 +1,12 @@
 import React, { useState } from "react";
+import { useSwap } from "./Swap";
 
 function Auth({ onLoginSuccess }) {
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState(null);
+  const [card, swapState, onSwapEnd] = useSwap({ isLoginMode, message }, isLoginMode);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -54,17 +56,20 @@ function Auth({ onLoginSuccess }) {
     <div
       className="tr-panel"
       data-block="auth"
-      data-mode={isLoginMode ? "login" : "register"}
+      data-mode={card.isLoginMode ? "login" : "register"}
+      data-state={swapState}
+      data-dir={isLoginMode ? "back" : "fwd"}
+      onAnimationEnd={onSwapEnd}
     >
-      <h2>{isLoginMode ? "Login" : "Register"}</h2>
+      <h2>{card.isLoginMode ? "Login" : "Register"}</h2>
       <p className="tr-sub">
-        {isLoginMode ? "Welcome back, racer." : "Pick the name other racers will see."}
+        {card.isLoginMode ? "Welcome back, racer." : "Pick the name other racers will see."}
       </p>
 
       <form onSubmit={handleSubmit}>
         <input
           type="text"
-          placeholder={isLoginMode ? "PLAYER NAME" : "CHOOSE A NAME"}
+          placeholder={card.isLoginMode ? "PLAYER NAME" : "CHOOSE A NAME"}
           aria-label="Player name"
           autoComplete="username"
           spellCheck={false}
@@ -75,22 +80,22 @@ function Auth({ onLoginSuccess }) {
         />
         <input
           type="password"
-          placeholder={isLoginMode ? "PASSWORD" : "CHOOSE A PASSWORD"}
+          placeholder={card.isLoginMode ? "PASSWORD" : "CHOOSE A PASSWORD"}
           aria-label="Password"
-          autoComplete={isLoginMode ? "current-password" : "new-password"}
+          autoComplete={card.isLoginMode ? "current-password" : "new-password"}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
           className="tr-input"
         />
         <button type="submit" className="tr-btn" data-v="primary">
-          {isLoginMode ? "Log in" : "Create account"}
+          {card.isLoginMode ? "Log in" : "Create account"}
         </button>
       </form>
 
-      {message && (
-        <p className="tr-msg" data-tone={message.tone} role="status">
-          {message.text}
+      {card.message && (
+        <p className="tr-msg" data-tone={card.message.tone} role="status">
+          {card.message.text}
         </p>
       )}
 
@@ -102,7 +107,7 @@ function Auth({ onLoginSuccess }) {
             setMessage(null);
           }}
         >
-          {isLoginMode ? "NEED AN ACCOUNT? REGISTER" : "HAVE AN ACCOUNT? LOG IN"}
+          {card.isLoginMode ? "NEED AN ACCOUNT? REGISTER" : "HAVE AN ACCOUNT? LOG IN"}
         </button>
       </div>
     </div>
