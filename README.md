@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/Zambrzyckii/type-racer/actions/workflows/ci.yml/badge.svg)](https://github.com/Zambrzyckii/type-racer/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/Zambrzyckii/type-racer)](https://github.com/Zambrzyckii/type-racer/releases/latest)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 ![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?style=for-the-badge&logo=dotnet)
 ![C#](https://img.shields.io/badge/C%23-239120?style=for-the-badge&logo=c-sharp)
@@ -91,3 +92,9 @@ docker pull ghcr.io/zambrzyckii/type-racer-client:latest
 * [Architecture and application flow](docs/architecture.md)
 * [Backend: API layer, endpoints, Core, Infrastructure](docs/backend/README.md)
 * [Frontend (React)](docs/frontend/README.md)
+
+---
+
+## License
+
+Released under the [MIT License](LICENSE). The pixel icons come from [pixelarticons](https://github.com/halfmage/pixelarticons) by Gerrit Halfmann, also MIT.
