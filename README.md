@@ -1,5 +1,8 @@
 # Type Racer - Real-Time Multiplayer Typing Game
 
+[![CI](https://github.com/Zambrzyckii/type-racer/actions/workflows/ci.yml/badge.svg)](https://github.com/Zambrzyckii/type-racer/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/Zambrzyckii/type-racer)](https://github.com/Zambrzyckii/type-racer/releases/latest)
+
 ![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?style=for-the-badge&logo=dotnet)
 ![C#](https://img.shields.io/badge/C%23-239120?style=for-the-badge&logo=c-sharp)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql)
