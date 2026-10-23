@@ -10,6 +10,8 @@
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker)
 ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
 
+![A race in progress](docs/images/race.png)
+
 ## Project Overview
 Type Racer is a highly concurrent, real-time multiplayer web application where players compete in typing speed contests. Built with a focus on low-latency state synchronization, scalable architecture, and clean code principles, this project demonstrates full-stack capabilities from real-time backend processing to automated deployment.
 
@@ -18,6 +20,14 @@ Type Racer is a highly concurrent, real-time multiplayer web application where p
 * **Event-Driven Gameplay:** Implemented power-ups and debuffs targeting specific players using isolated Connection IDs, preventing state leakage across shared browser sessions.
 * **Secure Authentication & Profiles:** Custom account management with persistent statistics and leaderboards.
 * **Production-Ready Deployment:** Hosted on a VPS, served via Nginx reverse proxy, and fully containerized with Docker.
+
+## Screenshots
+
+| Login | Lobby |
+|---|---|
+| ![Login card](docs/images/login.png) | ![Lobby with three players and room settings](docs/images/lobby.png) |
+| **Freeze attack** | **Victory** |
+| ![Typing area frozen by an attack](docs/images/freeze.png) | ![Victory panel with the leaderboard](docs/images/victory.png) |
 
 ---
 
@@ -63,6 +73,15 @@ docker compose up --build
 ```
 
 Open http://localhost:3000. Nginx serves the React build and proxies `/api` and `/gamehub` (SignalR WebSockets) to the .NET API, so the whole app runs on one origin. PostgreSQL data persists in the `pgdata` volume and the schema is created on first start. Development defaults for the database password and the JWT key are set in `docker-compose.yml`; to override them run `cp .env.example .env` and edit the values.
+
+### Prebuilt images
+
+Every release tag publishes both images to GitHub Container Registry.
+
+```bash
+docker pull ghcr.io/zambrzyckii/type-racer-server:latest
+docker pull ghcr.io/zambrzyckii/type-racer-client:latest
+```
 
 ---
 
