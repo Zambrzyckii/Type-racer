@@ -1,10 +1,10 @@
 # Frontend
 
-The client is a single-page React application in `typeracer-client`. It has no router and no external state library: one custom hook, `useGameLogic`, owns all client-side state and renders one of several views conditionally inside a single component. The client talks to the Api project over REST (`/api/...`) and to the SignalR hub over `/gamehub`, both addressed with relative URLs so the browser resolves them against whatever origin served the page (the nginx container in Docker, or the CRA dev server locally).
+The client is a single-page React application in `Frontend`. It has no router and no external state library: one custom hook, `useGameLogic`, owns all client-side state and renders one of several views conditionally inside a single component. The client talks to the Api project over REST (`/api/...`) and to the SignalR hub over `/gamehub`, both addressed with relative URLs so the browser resolves them against whatever origin served the page (the nginx container in Docker, or the CRA dev server locally).
 
 ## Stack and scripts
 
-Versions and scripts are read from [`typeracer-client/package.json`](../../typeracer-client/package.json).
+Versions and scripts are read from [`Frontend/package.json`](../../Frontend/package.json).
 
 | Item | Value |
 |---|---|
@@ -15,27 +15,27 @@ Versions and scripts are read from [`typeracer-client/package.json`](../../typer
 | `npm run build` | produces a static production build in `build/` |
 | `npm test` | runs `react-scripts test` |
 
-Styling lives in two stylesheets: [`typeracer-client/src/App.css`](../../typeracer-client/src/App.css) for the interface and [`typeracer-client/src/Scene.css`](../../typeracer-client/src/Scene.css) for the pixel-art backdrop. Elements carry `tr-*` classes (`sk-*` for the scene and effects), design tokens are CSS custom properties on `:root`, and inline `style` props are used only to pass custom properties such as `--p` (progress) to CSS. The current state is written as `data-*` attributes on the root element (`data-screen`, `data-phase`, `data-debuff`, `data-buff`, `data-err`), and the stylesheets react to them. [`typeracer-client/public/index.html`](../../typeracer-client/public/index.html) loads the Figtree, JetBrains Mono and Jersey 10 fonts from Google Fonts.
+Styling lives in two stylesheets: [`Frontend/src/App.css`](../../Frontend/src/App.css) for the interface and [`Frontend/src/Scene.css`](../../Frontend/src/Scene.css) for the pixel-art backdrop. Elements carry `tr-*` classes (`sk-*` for the scene and effects), design tokens are CSS custom properties on `:root`, and inline `style` props are used only to pass custom properties such as `--p` (progress) to CSS. The current state is written as `data-*` attributes on the root element (`data-screen`, `data-phase`, `data-debuff`, `data-buff`, `data-err`), and the stylesheets react to them. [`Frontend/public/index.html`](../../Frontend/public/index.html) loads the Figtree, JetBrains Mono and Jersey 10 fonts from Google Fonts.
 
 ## Source layout
 
 | File | Role |
 |---|---|
-| [`typeracer-client/src/index.js`](../../typeracer-client/src/index.js) | React entry point; mounts `App` into `#root` inside `React.StrictMode` |
-| [`typeracer-client/src/App.js`](../../typeracer-client/src/App.js) | Single screen component; renders Auth, join-room, lobby, and race/finished views conditionally based on hook state |
-| [`typeracer-client/src/Auth.js`](../../typeracer-client/src/Auth.js) | Login/register form, toggled between the two modes |
-| [`typeracer-client/src/GameLogic.js`](../../typeracer-client/src/GameLogic.js) | `useGameLogic` hook: all React state, the SignalR connection, HTTP calls, action handlers, and text-highlighting logic |
-| [`typeracer-client/src/App.css`](../../typeracer-client/src/App.css) | Design tokens and the stylesheet for panels, buttons, inputs, the race view, effects and transitions |
-| [`typeracer-client/src/Scene.js`](../../typeracer-client/src/Scene.js), [`Scene.css`](../../typeracer-client/src/Scene.css) | Pixel-art backdrop built from layers; the `useArtScale` hook sizes one art pixel to a whole number of device pixels |
-| [`typeracer-client/src/Icon.js`](../../typeracer-client/src/Icon.js) | Inline SVG icons (pixelarticons, MIT) |
-| [`typeracer-client/src/Swap.js`](../../typeracer-client/src/Swap.js) | `useSwap` hook: shows a change in two phases (the old content leaves, the new one enters), used for the login/register card and for screen changes |
-| `typeracer-client/src/assets/scene/` | PNG artwork for the scene, the racers and the effects |
+| [`Frontend/src/index.js`](../../Frontend/src/index.js) | React entry point; mounts `App` into `#root` inside `React.StrictMode` |
+| [`Frontend/src/App.js`](../../Frontend/src/App.js) | Single screen component; renders Auth, join-room, lobby, and race/finished views conditionally based on hook state |
+| [`Frontend/src/Auth.js`](../../Frontend/src/Auth.js) | Login/register form, toggled between the two modes |
+| [`Frontend/src/GameLogic.js`](../../Frontend/src/GameLogic.js) | `useGameLogic` hook: all React state, the SignalR connection, HTTP calls, action handlers, and text-highlighting logic |
+| [`Frontend/src/App.css`](../../Frontend/src/App.css) | Design tokens and the stylesheet for panels, buttons, inputs, the race view, effects and transitions |
+| [`Frontend/src/Scene.js`](../../Frontend/src/Scene.js), [`Scene.css`](../../Frontend/src/Scene.css) | Pixel-art backdrop built from layers; the `useArtScale` hook sizes one art pixel to a whole number of device pixels |
+| [`Frontend/src/Icon.js`](../../Frontend/src/Icon.js) | Inline SVG icons (pixelarticons, MIT) |
+| [`Frontend/src/Swap.js`](../../Frontend/src/Swap.js) | `useSwap` hook: shows a change in two phases (the old content leaves, the new one enters), used for the login/register card and for screen changes |
+| `Frontend/src/assets/scene/` | PNG artwork for the scene, the racers and the effects |
 
 `Game.css` and `logo.svg` are present in `src/` but are not imported by `index.js`, `App.js`, `Auth.js` or `GameLogic.js`. `setupTests.js`, `reportWebVitals.js` and `index.css` are the unmodified Create React App boilerplate. `App.test.js` renders `App` without a session and checks that the login form shows its "Log in" button.
 
 ## State model (useGameLogic)
 
-[`GameLogic.js`](../../typeracer-client/src/GameLogic.js) holds five pieces of `useState` state plus derived/computed values:
+[`GameLogic.js`](../../Frontend/src/GameLogic.js) holds five pieces of `useState` state plus derived/computed values:
 
 | State | Fields (initial values) |
 |---|---|
@@ -123,7 +123,7 @@ Methods invoked (`invoke(...)`):
 | `RestartGame` | — |
 | `SendChatMessage` | `room.code`, `session.username`, message text |
 
-`SendChatMessage` and `ReceiveChatMessage` are implemented on the client, but [`TypeRacerServer/Api/GameHub.cs`](../../TypeRacerServer/Api/GameHub.cs) defines no `SendChatMessage` method and never sends a `ReceiveChatMessage` event; the two have no server-side counterpart. Payload shapes for the other hub methods are documented in [`../backend/endpoints.md`](../backend/endpoints.md).
+`SendChatMessage` and `ReceiveChatMessage` are implemented on the client, but [`Backend/src/Api/GameHub.cs`](../../Backend/src/Api/GameHub.cs) defines no `SendChatMessage` method and never sends a `ReceiveChatMessage` event; the two have no server-side counterpart. Payload shapes for the other hub methods are documented in [`../backend/endpoints.md`](../backend/endpoints.md).
 
 ### Authentication state
 
@@ -139,7 +139,7 @@ When a player reaches 100% progress (or an opponent does) and `room.settings.sec
 
 ## Build and serving
 
-`npm run build` compiles the app into `typeracer-client/build/`. [`typeracer-client/Dockerfile`](../../typeracer-client/Dockerfile) builds it in a `node:24-alpine` stage (`npm ci` + `npm run build`) and copies the output into an `nginx:alpine` stage. [`typeracer-client/nginx.conf`](../../typeracer-client/nginx.conf) serves the SPA with a `try_files $uri $uri/ /index.html` fallback, and proxies `/api/` and `/gamehub` to `backend:8080`, adding the `Upgrade`/`Connection` headers needed for the WebSocket handshake on `/gamehub`.
+`npm run build` compiles the app into `Frontend/build/`. [`Frontend/Dockerfile`](../../Frontend/Dockerfile) builds it in a `node:24-alpine` stage (`npm ci` + `npm run build`) and copies the output into an `nginx:alpine` stage. [`Frontend/nginx.conf`](../../Frontend/nginx.conf) serves the SPA with a `try_files $uri $uri/ /index.html` fallback, and proxies `/api/` and `/gamehub` to `backend:8080`, adding the `Upgrade`/`Connection` headers needed for the WebSocket handshake on `/gamehub`.
 
 `npm start` runs CRA's dev server on port 3000. `package.json` has no CRA `proxy` field, so in that mode the relative `/api/...` and `/gamehub` calls need a backend reachable on the same origin as port 3000; the Docker Compose setup instead puts nginx in front of both the static build and the backend so relative URLs resolve correctly (see [`docker-compose.yml`](../../docker-compose.yml)).
 

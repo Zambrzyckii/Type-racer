@@ -1,38 +1,38 @@
 # Endpoints and SignalR contract
 
-This page lists the complete client-facing contract of the backend: four REST endpoints under `/api` and the SignalR hub at `/gamehub`. All routes live in the Api project (`TypeRacerServer.csproj`, folder `TypeRacerServer/Api`); the request and response shapes are defined by DTOs and services in the Core project (folders `Domain/` and `Application/` inside `TypeRacerServer/Core`), and are consumed by the client (React SPA in `typeracer-client`). In the Docker setup (`docker-compose.yml`) both `/api` and `/gamehub` are reached through nginx on port 3000. JSON is (de)serialized with ASP.NET Core defaults (camelCase property names, case-insensitive property binding), and MVC routing is case-insensitive, so `/api/login` and `/api/Login` both resolve.
+This page lists the complete client-facing contract of the backend: four REST endpoints under `/api` and the SignalR hub at `/gamehub`. All routes live in the Api project (`TypeRacerServer.csproj`, folder `Backend/src/Api`); the request and response shapes are defined by DTOs and services in the Core project (folders `Domain/` and `Application/` inside `Backend/src/Core`), and are consumed by the client (React SPA in `Frontend`). In the Docker setup (`docker-compose.yml`) both `/api` and `/gamehub` are reached through nginx on port 3000. JSON is (de)serialized with ASP.NET Core defaults (camelCase property names, case-insensitive property binding), and MVC routing is case-insensitive, so `/api/login` and `/api/Login` both resolve.
 
 ## Authentication
 
-`POST /api/Login` issues a JWT, signed with HS256 using the key from `JwtSettings:Key`. The token carries a single claim, `ClaimTypes.Name` set to the username, and expires 3 days after issuance. Token creation happens in [`LoginService.cs`](../../TypeRacerServer/Core/Application/Services/AccountManager/LoginService.cs).
+`POST /api/Login` issues a JWT, signed with HS256 using the key from `JwtSettings:Key`. The token carries a single claim, `ClaimTypes.Name` set to the username, and expires 3 days after issuance. Token creation happens in [`LoginService.cs`](../../Backend/src/Core/Application/Services/AccountManager/LoginService.cs).
 
 REST calls that need identity send `Authorization: Bearer <token>`. The SignalR hub receives the same token differently depending on the leg of the connection:
 
-- The JavaScript SignalR client (`typeracer-client/src/GameLogic.js`) sends the token as an `Authorization: Bearer` header on the `POST /gamehub/negotiate` request, exactly like a REST call.
+- The JavaScript SignalR client (`Frontend/src/GameLogic.js`) sends the token as an `Authorization: Bearer` header on the `POST /gamehub/negotiate` request, exactly like a REST call.
 - Browsers cannot set custom headers on a WebSocket handshake, so for the following WebSocket upgrade the client appends the token as an `access_token` query string parameter instead.
-- On the server, [`AddAuthentication.cs`](../../TypeRacerServer/Api/Extensions/AddAuthentication.cs) reads that query parameter in `OnMessageReceived` for any request path starting with `/gamehub`, and uses it as the bearer token for that connection.
+- On the server, [`AddAuthentication.cs`](../../Backend/src/Api/Extensions/AddAuthentication.cs) reads that query parameter in `OnMessageReceived` for any request path starting with `/gamehub`, and uses it as the bearer token for that connection.
 
 Two client-facing pieces require an authenticated caller, but not in the same way:
 
 - `GameHub` carries a class-level `[Authorize]` attribute: every hub method requires a valid JWT.
 - `SaveScoreController` has no `[Authorize]` attribute. It reads the username from `HttpContext.User.Identity?.Name` and throws `InvalidOperationException` if that value is null, which happens when no valid token was sent.
 
-`RegisterController` and `LoginController` both carry `[EnableRateLimiting("AntiSpamPolicy")]`, but the corresponding rate limiter registration and `app.UseRateLimiter()` call are commented out in [`Program.cs`](../../TypeRacerServer/Api/Program.cs), so the attribute currently has no effect.
+`RegisterController` and `LoginController` both carry `[EnableRateLimiting("AntiSpamPolicy")]`, but the corresponding rate limiter registration and `app.UseRateLimiter()` call are commented out in [`Program.cs`](../../Backend/src/Api/Program.cs), so the attribute currently has no effect.
 
 ## REST endpoints
 
 | Method | Route | Auth | Controller class | Core service |
 |---|---|---|---|---|
-| `POST` | `/api/Register` | none | [`RegisterController`](../../TypeRacerServer/Api/Controllers/RegisterController.cs) | [`RegisterService`](../../TypeRacerServer/Core/Application/Services/AccountManager/RegisterService.cs) |
-| `POST` | `/api/Login` | none | [`LoginController`](../../TypeRacerServer/Api/Controllers/LoginController.cs) | [`LoginService`](../../TypeRacerServer/Core/Application/Services/AccountManager/LoginService.cs) |
-| `GET` | `/api/Leaderboard` | none | [`Leaderboard`](../../TypeRacerServer/Api/Controllers/Leaderboard.cs) | [`LeaderboardSerivce`](../../TypeRacerServer/Core/Application/Services/LeaderboardManager/LeaderboardService.cs) |
-| `POST` | `/api/SaveScore` | Bearer token (read from `HttpContext.User.Identity?.Name`, no `[Authorize]` attribute) | [`SaveScoreController`](../../TypeRacerServer/Api/Controllers/SaveScoreController.cs) | [`SaveScoreService`](../../TypeRacerServer/Core/Application/Services/PostGameManager/SaveScoreService.cs) |
+| `POST` | `/api/Register` | none | [`RegisterController`](../../Backend/src/Api/Controllers/RegisterController.cs) | [`RegisterService`](../../Backend/src/Core/Application/Services/AccountManager/RegisterService.cs) |
+| `POST` | `/api/Login` | none | [`LoginController`](../../Backend/src/Api/Controllers/LoginController.cs) | [`LoginService`](../../Backend/src/Core/Application/Services/AccountManager/LoginService.cs) |
+| `GET` | `/api/Leaderboard` | none | [`Leaderboard`](../../Backend/src/Api/Controllers/Leaderboard.cs) | [`LeaderboardSerivce`](../../Backend/src/Core/Application/Services/LeaderboardManager/LeaderboardService.cs) |
+| `POST` | `/api/SaveScore` | Bearer token (read from `HttpContext.User.Identity?.Name`, no `[Authorize]` attribute) | [`SaveScoreController`](../../Backend/src/Api/Controllers/SaveScoreController.cs) | [`SaveScoreService`](../../Backend/src/Core/Application/Services/PostGameManager/SaveScoreService.cs) |
 
 No exception-handling middleware is registered, so exceptions thrown by Core services surface as HTTP 500 responses.
 
 ### POST /api/Register
 
-Request body maps to [`RegisterRequestByMe`](../../TypeRacerServer/Core/Application/Requests/AccountManager/RegisterRequestByMe.cs):
+Request body maps to [`RegisterRequestByMe`](../../Backend/src/Core/Application/Requests/AccountManager/RegisterRequestByMe.cs):
 
 ```json
 {
@@ -51,7 +51,7 @@ Response: `200 OK` with an empty body.
 
 ### POST /api/Login
 
-Request body maps to [`LoginRequest`](../../TypeRacerServer/Core/Application/Requests/AccountManager/LoginRequest.cs):
+Request body maps to [`LoginRequest`](../../Backend/src/Core/Application/Requests/AccountManager/LoginRequest.cs):
 
 ```json
 {
@@ -68,19 +68,19 @@ Response `200 OK`:
 }
 ```
 
-`LoginController` returns an anonymous object with a `Token` property; System.Text.Json serializes it to `token`. The client reads `data.token || data.Token` (`typeracer-client/src/Auth.js`) to tolerate either casing, although the server only ever emits `token`.
+`LoginController` returns an anonymous object with a `Token` property; System.Text.Json serializes it to `token`. The client reads `data.token || data.Token` (`Frontend/src/Auth.js`) to tolerate either casing, although the server only ever emits `token`.
 
 | Status | Condition |
 |---|---|
 | `200` | Credentials valid, token returned |
 | `400` | Malformed request JSON |
-| `500` | `LoginService.LoginHandler` throws a plain `Exception` for an unknown username (`"User not found"`) or a wrong password (`"Wrong password"`); an empty or whitespace password also throws (`ArgumentException` from the `Password` value object, [`Password.cs`](../../TypeRacerServer/Core/Domain/ValueObjects/Password.cs)) before the credential check runs |
+| `500` | `LoginService.LoginHandler` throws a plain `Exception` for an unknown username (`"User not found"`) or a wrong password (`"Wrong password"`); an empty or whitespace password also throws (`ArgumentException` from the `Password` value object, [`Password.cs`](../../Backend/src/Core/Domain/ValueObjects/Password.cs)) before the credential check runs |
 
 ### GET /api/Leaderboard
 
 No request body, no authentication.
 
-Response `200 OK`, an array of [`TopPlayers`](../../TypeRacerServer/Core/Application/Models/PlayerData/TopPlayers.cs):
+Response `200 OK`, an array of [`TopPlayers`](../../Backend/src/Core/Application/Models/PlayerData/TopPlayers.cs):
 
 ```json
 [
@@ -101,11 +101,11 @@ Response `200 OK`, an array of [`TopPlayers`](../../TypeRacerServer/Core/Applica
 ]
 ```
 
-`LeaderboardRepository.GetTopUsers` (see [`LeaderboardRepository.cs`](../../TypeRacerServer/Infrastructure/Persistence/Repositories/LeaderboardRepository.cs)) returns at most 10 users, ordered by `GamesWin` descending, then `HighScoreWpm` descending. `LeaderboardSerivce.Leaderboard` maps each `User` to a `TopPlayers` record; when `GamesWin > 0` it computes `Winrate` as `GamesWin / GamesPlayed * 100`, rounded to one decimal, otherwise `Winrate` is `0`.
+`LeaderboardRepository.GetTopUsers` (see [`LeaderboardRepository.cs`](../../Backend/src/Infrastructure/Persistence/Repositories/LeaderboardRepository.cs)) returns at most 10 users, ordered by `GamesWin` descending, then `HighScoreWpm` descending. `LeaderboardSerivce.Leaderboard` maps each `User` to a `TopPlayers` record; when `GamesWin > 0` it computes `Winrate` as `GamesWin / GamesPlayed * 100`, rounded to one decimal, otherwise `Winrate` is `0`.
 
 ### POST /api/SaveScore
 
-Request body maps to [`SaveScoreRequest`](../../TypeRacerServer/Core/Application/Requests/SavingStats/SaveScoreRequest.cs), which declares `Username`, `WPM` and `isWinner`:
+Request body maps to [`SaveScoreRequest`](../../Backend/src/Core/Application/Requests/SavingStats/SaveScoreRequest.cs), which declares `Username`, `WPM` and `isWinner`:
 
 ```json
 {
@@ -115,7 +115,7 @@ Request body maps to [`SaveScoreRequest`](../../TypeRacerServer/Core/Application
 }
 ```
 
-The `username` field in the body is accepted but not used: `SaveScoreController` takes the username from the JWT `Name` claim instead and passes it separately to `SaveScoreService.SaveScoreHandler`. The client (`typeracer-client/src/GameLogic.js`) sends the body with PascalCase keys (`Username`, `Wpm`, `IsWinner`), which still binds correctly because ASP.NET Core JSON model binding is case-insensitive.
+The `username` field in the body is accepted but not used: `SaveScoreController` takes the username from the JWT `Name` claim instead and passes it separately to `SaveScoreService.SaveScoreHandler`. The client (`Frontend/src/GameLogic.js`) sends the body with PascalCase keys (`Username`, `Wpm`, `IsWinner`), which still binds correctly because ASP.NET Core JSON model binding is case-insensitive.
 
 Response: `200 OK` with an empty body.
 
@@ -127,18 +127,18 @@ Response: `200 OK` with an empty body.
 
 ## SignalR hub /gamehub
 
-The client connects with `new HubConnectionBuilder().withUrl("/gamehub", { accessTokenFactory })` in [`GameLogic.js`](../../typeracer-client/src/GameLogic.js); `accessTokenFactory` reads the JWT from `localStorage` and strips any character outside `[a-zA-Z0-9_.-]`. Connecting happens in two HTTP legs:
+The client connects with `new HubConnectionBuilder().withUrl("/gamehub", { accessTokenFactory })` in [`GameLogic.js`](../../Frontend/src/GameLogic.js); `accessTokenFactory` reads the JWT from `localStorage` and strips any character outside `[a-zA-Z0-9_.-]`. Connecting happens in two HTTP legs:
 
 1. `POST /gamehub/negotiate?negotiateVersion=1` with an `Authorization: Bearer <token>` header, handled by the SignalR JS client's internal HTTP client.
 2. A WebSocket upgrade on `/gamehub?id=<connectionToken>&access_token=<token>`, where the token travels as a query parameter because the WebSocket handshake carries no custom headers.
 
-Through nginx ([`nginx.conf`](../../typeracer-client/nginx.conf)), the `/gamehub` location forwards the `Upgrade` and `Connection` headers (via the `$connection_upgrade` map) so the WebSocket upgrade passes through to the backend container. `GameHub` carries `[Authorize]`, so both legs need a valid token.
+Through nginx ([`nginx.conf`](../../Frontend/nginx.conf)), the `/gamehub` location forwards the `Upgrade` and `Connection` headers (via the `$connection_upgrade` map) so the WebSocket upgrade passes through to the backend container. `GameHub` carries `[Authorize]`, so both legs need a valid token.
 
 Player identity inside the hub is `Context.User.Identity.Name` (the JWT `Name` claim). A room is a SignalR group named after the room code (the `HostCode`/`roomCode` parameter), joined with `Groups.AddToGroupAsync` in `JoinRoom`. A session is the per-connection player state keyed by `Context.ConnectionId`, held in the in-memory `GameState`.
 
 ### Client to server methods
 
-All methods are defined in [`GameHub.cs`](../../TypeRacerServer/Api/GameHub.cs).
+All methods are defined in [`GameHub.cs`](../../Backend/src/Api/GameHub.cs).
 
 | Method | Core service | Return value | Who may call it effectively | Events triggered |
 |---|---|---|---|---|
@@ -146,7 +146,7 @@ All methods are defined in [`GameHub.cs`](../../TypeRacerServer/Api/GameHub.cs).
 | `Task StartRoomGame(string HostCode)` | `StartRoomGameService.StartRoomGame` | none (`Task`) | only effective when the caller's `ConnectionId` matches the room's `HostConnection` and the game has not started yet; the check happens inside `StartRoomGameService`, other callers are silently ignored | `LoadText` (whole group), only on success |
 | `Task LeaveRoom()` | `PerformCleanupService.PerformCleanup` | none (`Task`) | any player with a session in a room; a caller without one is ignored. The caller is removed at once (no grace period) and taken out of the SignalR group; if the caller was the host, the first remaining player becomes the host | `UpdatePlayersList` (rest of the group), unless the room is left empty |
 | `Task SendProgress(string currentInput)` | `SendProgressService.SendProgress` | none (`Task`) | any player with an active session and target text; a frozen or already-finished player's input is ignored | `PowerUpGranted` (caller), `ReceiveDefense` (caller), `ReceiveAttack` (group, hard-mode failure), `UpdateState` (group), `GameOver` (group, after a delay or immediately, once the round ends) |
-| `Task UsePowerUp(string roomCode, string AttackerNick, string TargetNick, string Power)` | `PowerUpService.PowerUp` (class `PowerUpService`, defined in [`UsePowerUpService.cs`](../../TypeRacerServer/Core/Application/Services/GameManager/UsePowerUpService.cs)) | none (`Task`) | effective while the room's game is started and `TargetNick` matches a player currently in the room; `AttackerNick` is accepted as a parameter but is not passed to the service, so it is not checked | `ReceiveAttack` sent to `Client(targetID)` only |
+| `Task UsePowerUp(string roomCode, string AttackerNick, string TargetNick, string Power)` | `PowerUpService.PowerUp` (class `PowerUpService`, defined in [`UsePowerUpService.cs`](../../Backend/src/Core/Application/Services/GameManager/UsePowerUpService.cs)) | none (`Task`) | effective while the room's game is started and `TargetNick` matches a player currently in the room; `AttackerNick` is accepted as a parameter but is not passed to the service, so it is not checked | `ReceiveAttack` sent to `Client(targetID)` only |
 | `Task RestartGame()` | `RestartGameService.RestartGame` | none (`Task`) | only effective when the caller's `ConnectionId` matches the room's `HostConnection`, checked inside `RestartGameService` | `BackToLobby` (group), only on success |
 | `Task ChangeRoomSettings(string roomCode, bool powerUpsEnabled, bool hardMode, int secondsToEnd)` | `ChangeRoomSettingsService.ChangeRoomSettings` | none (`Task`) | only effective when the caller's `ConnectionId` matches the room's `HostConnection`, checked inside `ChangeRoomSettingsService` | `SettingsUpdate` (group), only on success |
 
@@ -169,7 +169,7 @@ JSON casing below follows the anonymous objects as written in `GameHub.cs`; Syst
 
 ### Power-up and buff values
 
-Defined in [`PowerUp.cs`](../../TypeRacerServer/Core/Domain/Constant/PowerUp.cs) and [`Buffs.cs`](../../TypeRacerServer/Core/Domain/Constant/Buffs.cs):
+Defined in [`PowerUp.cs`](../../Backend/src/Core/Domain/Constant/PowerUp.cs) and [`Buffs.cs`](../../Backend/src/Core/Domain/Constant/Buffs.cs):
 
 | Kind | Values | Server-side effect |
 |---|---|---|

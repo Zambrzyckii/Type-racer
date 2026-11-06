@@ -36,7 +36,7 @@ Type Racer is a highly concurrent, real-time multiplayer web application where p
 
 The backend is a layered .NET solution inspired by **Clean Architecture**: the Api project depends on Infrastructure and Core, Infrastructure depends on Core, and Core has no project references. Game rules live in Core and reach the database only through repository interfaces.
 
-### Project Structure (`TypeRacerServer/`)
+### Project Structure (`Backend/src/`)
 * **`Core`**: `Domain/` holds the `User` entity, value objects (`Username`, `Password`), game constants and the in-memory `GameState`; `Application/` holds one service per use case (`JoinRoomService`, `SendProgressService`, `EndGameProcessService`, ...), their result records and the repository interfaces.
 * **`Infrastructure`**: Implements data access using **Entity Framework Core** with Npgsql. Utilizes the **Repository Pattern** (`LoginRepository`, `SaveScoreRepository`, ...) over a single `AppDbContext`.
 * **`Api`**: The entry point (`Program.cs`, `GameHub.cs`, controllers). Handles HTTP requests, JWT authentication, SignalR WebSocket connections and Dependency Injection setup, and translates Core results into real-time events.
@@ -54,7 +54,7 @@ Diagrams, request flows and design notes: [docs/architecture.md](docs/architectu
 * **PostgreSQL** - Relational database for robust, concurrent data storage.
 
 ### Frontend
-* **React.js** - UI components and state management (located in `/typeracer-client`).
+* **React.js** - UI components and state management (located in `/Frontend`).
 
 ### DevOps & Infrastructure
 * **Docker & Docker Compose** - Containerization for isolated and consistent environments.
