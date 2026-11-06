@@ -1,4 +1,4 @@
-# Build outputs at any depth (Api/, Core/, Infrastructure/, *.Tests/) and the old manual publish/ folder
+# Build outputs at any depth (src/, tests/) and a manual publish/ folder
 **/bin/
 **/obj/
 publish/
@@ -8,4 +8,4 @@ publish/
 *.http
 
 # Local dev settings: inside the container the API is configured via environment variables
-Api/appsettings.json
+src/Api/appsettings.json
