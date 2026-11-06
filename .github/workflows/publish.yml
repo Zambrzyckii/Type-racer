@@ -18,10 +18,10 @@ jobs:
       matrix:
         include:
           - name: type-racer-server
-            context: TypeRacerServer
+            context: Backend
             description: ASP.NET Core API and SignalR hub of Type Racer
           - name: type-racer-client
-            context: typeracer-client
+            context: Frontend
             description: React client of Type Racer served by nginx
     steps:
       - uses: actions/checkout@v7
