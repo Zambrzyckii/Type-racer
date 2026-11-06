@@ -40,7 +40,7 @@ services:
     restart: unless-stopped
 
   frontend:
-    build: ./typeracer-client
+    build: ./Frontend
     ports:
       - "3000:80"
     depends_on:
