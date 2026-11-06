@@ -20,7 +20,7 @@ services:
     #   - "127.0.0.1:5433:5432"
 
   backend:
-    build: ./TypeRacerServer
+    build: ./Backend
     environment:
       # Must use the same POSTGRES_PASSWORD default as the db service above
       ConnectionStrings__DefaultConnection: "Host=db;Database=TypeRacerDB;Username=postgres;Password=${POSTGRES_PASSWORD:-typeracer-dev-password}"
@@ -40,7 +40,7 @@ services:
     restart: unless-stopped
 
   frontend:
-    build: ./typeracer-client
+    build: ./Frontend
     ports:
       - "3000:80"
     depends_on:

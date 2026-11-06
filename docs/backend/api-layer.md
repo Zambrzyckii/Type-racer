@@ -1,11 +1,11 @@
 # API layer
 
-The Api project (`TypeRacerServer.csproj`, folder `TypeRacerServer/Api`) is the entry point of the backend. It hosts the REST controllers and the SignalR hub, wires up authentication and the middleware pipeline, and connects the Core project (folders `Domain/` and `Application/` inside `TypeRacerServer/Core`) with the Infrastructure project (`TypeRacerServer/Infrastructure`).
+The Api project (`TypeRacerServer.csproj`, folder `Backend/src/Api`) is the entry point of the backend. It hosts the REST controllers and the SignalR hub, wires up authentication and the middleware pipeline, and connects the Core project (folders `Domain/` and `Application/` inside `Backend/src/Core`) with the Infrastructure project (`Backend/src/Infrastructure`).
 
 ## Project layout
 
 ```
-TypeRacerServer/Api
+Backend/src/Api
 ├── Program.cs
 ├── GameHub.cs
 ├── Controllers/
@@ -18,16 +18,18 @@ TypeRacerServer/Api
 ├── Middlewares/
 │   ├── PerformanceLoggerMiddleware.cs
 │   └── RateLimiterMiddleware.cs
+├── Properties/
+│   └── launchSettings.json     (launch profiles for dotnet run)
 ├── appsettings.Development.json
 ├── appsettings.json            (git-ignored, local only)
 └── TypeRacerServer.csproj
 ```
 
-[`TypeRacerServer.csproj`](../../TypeRacerServer/Api/TypeRacerServer.csproj) uses the `Microsoft.NET.Sdk.Web` SDK targeting `net10.0`. Its package references are `BCrypt.Net-Next`, `Microsoft.AspNetCore.Authentication.JwtBearer`, `Microsoft.EntityFrameworkCore.Design`, `Microsoft.EntityFrameworkCore.Tools` and `Npgsql.EntityFrameworkCore.PostgreSQL`. It carries `ProjectReference`s to the Infrastructure project and the Core project.
+[`TypeRacerServer.csproj`](../../Backend/src/Api/TypeRacerServer.csproj) uses the `Microsoft.NET.Sdk.Web` SDK targeting `net10.0`. Its package references are `BCrypt.Net-Next`, `Microsoft.AspNetCore.Authentication.JwtBearer`, `Microsoft.EntityFrameworkCore.Design`, `Microsoft.EntityFrameworkCore.Tools` and `Npgsql.EntityFrameworkCore.PostgreSQL`. It carries `ProjectReference`s to the Infrastructure project and the Core project.
 
 ## Startup (Program.cs)
 
-[`Program.cs`](../../TypeRacerServer/Api/Program.cs) follows this order:
+[`Program.cs`](../../Backend/src/Api/Program.cs) follows this order:
 
 1. **Configuration read.** `builder.Configuration["JwtSettings:Key"]` is read first; if it is null or empty, startup throws an `Exception("No jwt key")`. The Npgsql connection string is read later from `ConnectionStrings:DefaultConnection`.
 2. **Service registration**, in code order:
@@ -38,7 +40,7 @@ TypeRacerServer/Api
    - `AddControllers()`.
    - Four repository registrations as `Scoped` services (`ILoginRepository`/`LoginRepository`, `IRegisterRepository`/`RegisterRepository`, `ILeaderboardRepository`/`LeaderboardRepository`, `ISaveScoreRepository`/`SaveScoreRepository`).
    - `AddCors` with a policy named `ReactPolicy`, allowing origin `http://localhost:3000` with any header, any method and credentials.
-   - `AddCoreServices()`, an extension defined in the Core project (`TypeRacerServer/Core/Domain/Dependency/DependencyInjection.cs`) that registers the Core application services and their interfaces.
+   - `AddCoreServices()`, an extension defined in the Core project (`Backend/src/Core/Domain/Dependency/DependencyInjection.cs`) that registers the Core application services and their interfaces.
 3. **Pipeline setup** (see [Request pipeline](#request-pipeline)).
 4. **Database initialization.** Inside a `using (var scope = app.Services.CreateScope())` block, the app resolves `AppDbContext` and calls `dbContext.Database.EnsureCreated()`.
 5. `app.Run()`.
@@ -71,16 +73,16 @@ The following diagram shows the middleware order as registered in `Program.cs`.
 </picture>
 
 - **CORS (`ReactPolicy`)** runs first and allows requests from `http://localhost:3000`.
-- **`PerformanceLoggerMiddleware`** wraps the rest of the pipeline in a `Stopwatch` and logs an informational message ("Request took {ElapsedMilliseconds} ms") when a request takes more than 500 ms, read from [`PerformanceLoggerMiddleware.cs`](../../TypeRacerServer/Api/Middlewares/PerformanceLoggerMiddleware.cs).
+- **`PerformanceLoggerMiddleware`** wraps the rest of the pipeline in a `Stopwatch` and logs an informational message ("Request took {ElapsedMilliseconds} ms") when a request takes more than 500 ms, read from [`PerformanceLoggerMiddleware.cs`](../../Backend/src/Api/Middlewares/PerformanceLoggerMiddleware.cs).
 - **Authentication** (`UseAuthentication()`) validates the JWT bearer token.
 - **Authorization** (`UseAuthorization()`) enforces `[Authorize]` attributes, such as the one on `GameHub`.
 - **Endpoints** are either the mapped controllers (`MapControllers()`) or the SignalR hub mapped at `/gamehub` (`MapHub<GameHub>("/gamehub")`).
 
-`RateLimiterMiddleware` ([`RateLimiterMiddleware.cs`](../../TypeRacerServer/Api/Middlewares/RateLimiterMiddleware.cs)) is defined as an extension `CustomRateLimiting` that registers a fixed-window limiter under the policy name `RateLimiter`, but its registration (`builder.Services.CustomRateLimiting()`) and the corresponding `app.UseRateLimiter()` call are both commented out in `Program.cs`. Independently of this, `LoginController` and `RegisterController` carry an `[EnableRateLimiting("AntiSpamPolicy")]` attribute, which refers to a policy name that is not registered anywhere in the reviewed code.
+`RateLimiterMiddleware` ([`RateLimiterMiddleware.cs`](../../Backend/src/Api/Middlewares/RateLimiterMiddleware.cs)) is defined as an extension `CustomRateLimiting` that registers a fixed-window limiter under the policy name `RateLimiter`, but its registration (`builder.Services.CustomRateLimiting()`) and the corresponding `app.UseRateLimiter()` call are both commented out in `Program.cs`. Independently of this, `LoginController` and `RegisterController` carry an `[EnableRateLimiting("AntiSpamPolicy")]` attribute, which refers to a policy name that is not registered anywhere in the reviewed code.
 
 ## Authentication
 
-[`Api/Extensions/AddAuthentication.cs`](../../TypeRacerServer/Api/Extensions/AddAuthentication.cs) configures JWT Bearer as the default authentication scheme (`JwtBearerDefaults.AuthenticationScheme`). Its `TokenValidationParameters`:
+[`Api/Extensions/AddAuthentication.cs`](../../Backend/src/Api/Extensions/AddAuthentication.cs) configures JWT Bearer as the default authentication scheme (`JwtBearerDefaults.AuthenticationScheme`). Its `TokenValidationParameters`:
 
 | Parameter | Value |
 |---|---|
@@ -119,7 +121,7 @@ Request and response contracts for each endpoint are documented in [`endpoints.m
 
 ## GameHub
 
-[`GameHub.cs`](../../TypeRacerServer/Api/GameHub.cs) is decorated with `[Authorize]` and mapped at `/gamehub`. It uses a primary constructor to inject `IHubContext<GameHub>` and eight Core services: `JoinRoomService`, `StartRoomGameService`, `PerformCleanupService`, `SendProgressService`, `PowerUpService`, `RestartGameService`, `ChangeRoomSettingsService`, `EndGameProcessService`.
+[`GameHub.cs`](../../Backend/src/Api/GameHub.cs) is decorated with `[Authorize]` and mapped at `/gamehub`. It uses a primary constructor to inject `IHubContext<GameHub>` and eight Core services: `JoinRoomService`, `StartRoomGameService`, `PerformCleanupService`, `SendProgressService`, `PowerUpService`, `RestartGameService`, `ChangeRoomSettingsService`, `EndGameProcessService`.
 
 The hub acts as an adapter between SignalR and Core: each hub method extracts the caller's nickname from `Context.User?.Identity?.Name`, calls exactly one Core service, receives back a plain result record, and translates that result into `Clients.Caller`, `Clients.Group(roomCode)` or `Clients.Client(connectionId)` calls. Rooms are SignalR groups named after the room code; a session is the per-connection player state keyed by `Context.ConnectionId`.
 
