@@ -11,7 +11,7 @@
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker)
 ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
 
-![A four-player race from the lobby to the victory screen](docs/images/race.gif)
+![A four-player race with power-ups, from the lobby to the victory screen](docs/images/race.gif)
 
 ## Project Overview
 Type Racer is a highly concurrent, real-time multiplayer web application where players compete in typing speed contests. Built with a focus on low-latency state synchronization, scalable architecture, and clean code principles, this project demonstrates full-stack capabilities from real-time backend processing to automated deployment.
