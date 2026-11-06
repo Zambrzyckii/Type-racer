@@ -31,7 +31,7 @@ Styling lives in two stylesheets: [`typeracer-client/src/App.css`](../../typerac
 | [`typeracer-client/src/Swap.js`](../../typeracer-client/src/Swap.js) | `useSwap` hook: shows a change in two phases (the old content leaves, the new one enters), used for the login/register card and for screen changes |
 | `typeracer-client/src/assets/scene/` | PNG artwork for the scene, the racers and the effects |
 
-`Game.css` and `logo.svg` are present in `src/` but are not imported by `index.js`, `App.js`, `Auth.js` or `GameLogic.js`. `App.test.js`, `setupTests.js`, `reportWebVitals.js` and `index.css` are the unmodified Create React App boilerplate.
+`Game.css` and `logo.svg` are present in `src/` but are not imported by `index.js`, `App.js`, `Auth.js` or `GameLogic.js`. `setupTests.js`, `reportWebVitals.js` and `index.css` are the unmodified Create React App boilerplate. `App.test.js` renders `App` without a session and checks that the login form shows its "Log in" button.
 
 ## State model (useGameLogic)
 
